@@ -31,6 +31,7 @@ x-rob498: &rob498 #  <<: *gpu
   pid: "host"
   security_opt:
     - seccomp:unconfined
+  # Command that runs when docker-compose pull is executed
   command:
     /bin/bash -c "export ROS_MASTER_URI=http://$$(hostname -i):11311 && export ROS_IP=$$(hostname -i)
   volumes:
@@ -44,6 +45,7 @@ x-rob498: &rob498 #  <<: *gpu
 services:
   drone:
     <<: *rob498
+    # Environmental variables passed into docker
     environment:
       PYTHONUNBUFFERED: 1
       DISPLAY: unix$DISPLAY
