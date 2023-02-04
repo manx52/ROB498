@@ -81,7 +81,7 @@ echo "xhost +local:docker" >> ~/.bashrc && source ~/.bashrc
 
 ### Running Instructions for computer
 - docker-compose.yaml is for a docker container that runs on a normal computer
-- docker-compose.robot.yaml  is for a docker container that runs on a Jetson Nano
+- docker-compose.robot.yaml  is for a docker container that runs on a Jetson Nano. Building from scratch will take more then an hour.
 ```bash
 docker-compose pull # Use docker-compose build if you want to build locally
 docker-compose up
