@@ -159,5 +159,5 @@ docker-compose up # Start the containers specified in this file
 - You never need to build the images a second time as all the code is mounted
 - For modifications please refer to the dockerfile and docker-compose.yaml. They are commented and show which sections are important to change
 - The initial docker containers are hosted on utrarobosoccer's docker hub here is a link to setup your own. https://docs.docker.com/docker-hub/quickstart/
-
+- if the docker commands give a permission error put a sudo in front of the command
 
