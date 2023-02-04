@@ -7,6 +7,25 @@ cd /usr/bin
 sudo ./tegrastats
 ```
 
+### Optional VNC setup
+- 192.168.0.101 is the jetson ip. It should be different for each Jetson so run ifconfig to find it.
+```bash
+ssh rob498@192.168.0.101 -C -L 5900:localhost:5900 # Port forwarding
+sudo apt install x11vnc
+
+# Start VNC
+x11vnc -forever -xkb -auth guess -display :0 -localhost -nopw
+
+# Or add as an alias:
+echo "alias vnc='x11vnc -forever -xkb -auth guess -display :0 -localhost -nopw'" >> .bashrc
+source .bashrc
+vnc # starts the vnc server, needs to be run every
+
+# Then every on personal computer:
+sudo apt-get install xtightvncviewer
+vncviewer 0.0.0.0:5900
+```
+
 Setup your ssh-keys
 ```bash
 ssh-keygen # Then keep entering, don't set a password
@@ -14,12 +33,17 @@ cd ~/.ssh &&  cat id_rsa.pub # Get contents of public key
 # on github > Settings > SSH and GPG Keys > New SSH Key, paste the key
 ```
 
+Setup auto ssh on personal computer, this will make it so you don't need to enter the password every time
+```
+ssh-copy-id rob498@jetson_ip
+```
+
 Create a catkin workspace:
 ```bash
 mkdir -p ~/catkin_ws/src && cd ~/catkin_ws
 catkin init
 cd src
-git clone git@github.com:manx52/ROB498.git
+git clone git@github.com:git@github.com:manx52/ROB498.git
 
 ```
 
@@ -68,13 +92,70 @@ docker-compose up
 docker-compose -f docker-compose.robot.yaml pull
 docker-compose -f docker-compose.robot.yaml up
 ```
+### Testing Docker for CUDA on Jetson Nano
+- Open up 2 terminals
+- In one, run docker-compose -f docker-compose.robot.test.yaml up
+- In the other run the code below
+```bash
+docker exec -it <docker image id> bash
+python3
+import torch
+torch.cuda.is_available()
+```
+If the output is true then success CUDA is enabled on the docker.
+
+##### Controling Drone from remote computer
+Make sure your computer and the robot are connected to the same network, then use your personal computer as the ROS_MASTER_URI. You can find the IP address using ```ifconfig```
+ - On your personal computer (or a dedicated server computer)
+```bash
+export ROS_MASTER_URI=http://<your computer ip>:11311
+export ROS_IP=<your computer ip>
+```
+- On your person computer edit ```/etc/hosts``` and add ```<robot1_ipaddress> <robot1_hostname>``` as an a line
+- On the robot add this to the bashrc
+```bash
+export ROS_MASTER_URI=http://<your computer ip>:11311
+```
+- Verify creating a publisher and subscriber on robot and your computer using ```rostopic pub```, ```rostopic echo``` and verify that the nodes can connect to each other using ```rosnode info <subscriber/publisher> node
+### Reference
+
+Terminology
+- image: a file representing an OS
+- container: a running instance of an image
+
+Basic docker commands
+```bash
+docker system prune # Clean everything
+
+# Images
+docker image ls # list all of the docker images that are built
+docker system prune --all # Delete all docker images
+docker pull <docker image name> # Pull a docker image
+docker tag old_image_name new_image_name
+docker run -it <docker image id> bash # Start a docker image as a container
+
+# Containers
+docker ps # list all of the docker containers that are running
+docker stop $(docker ps -aq) # Stop all running docker containers
+docker rm $(docker ps -aq) # Remove all not running docker containers
+docker stop $(docker ps -aq) # Stop all not running docker containers
+docker exec -it <docker image id> bash # SSH into a docker image to see whats going on inside it
+
+# Identify service with port and kill it
+ps -aux | grep <PORT> && sudo kill -9 <PID>
+sudo netstat -tulpn | grep <PORT> && sudo kill -9 <PID>
+
+# Docker compose
+docker-compose build # Build all docker images
+docker-compose pull # Takes images from dockerhub
+docker-compose push # Push all docker
+docker-compose up # Start the containers specified in this file
+
+```
 
 ### Notes
-- To run just simulator run docker-compose up simulator
 - You never need to build the images a second time as all the code is mounted
-- To run the full game run docker-compose -f docker-compose.full.yaml up
-- To avoid opening rviz everytime, run the following
-```bash
-sudo rm /opt/ros/noetic/share/rviz/default.rviz
-sudo ln -s /home/$USER/catkin_ws/src/soccerbot/soccerbot/rviz/soccerbot.rviz /opt/ros/noetic/share/rviz/default.rviz
-```
+- For modifications please refer to the dockerfile and docker-compose.yaml. They are commented and show which sections are important to change
+- The initial docker containers are hosted on utrarobosoccer's docker hub here is a link to setup your own. https://docs.docker.com/docker-hub/quickstart/
+
+
