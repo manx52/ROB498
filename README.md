@@ -81,7 +81,6 @@ echo "xhost +local:docker" >> ~/.bashrc && source ~/.bashrc
 
 ### Running Instructions for computer
 ```bash
-docker login -u utrasoccer # Password dckr_pat_r8_EwMV7RmiYNG2VbnculJUqc1w
 docker-compose pull # Use docker-compose build if you want to build locally
 docker-compose up
 # docker-compose -f docker-compose.robot.yaml up
