@@ -1,5 +1,5 @@
 ### Setup Instructions
-The docker setup is only available for computers with NVIDIA-capable GPUs. TO verify this, run ```nvidia-smi``` and verify if you have any problems. If you haven't installed it, go to Software & Updates >> Additional Drivers and install the recommended NVIDIA driver
+The docker setup is only available for computers with NVIDIA-capable GPUs (Minimum 32 GB of free space). TO verify this, run ```nvidia-smi``` and verify if you have any problems. If you haven't installed it, go to Software & Updates >> Additional Drivers and install the recommended NVIDIA driver
 
 #### Verify CUDA on Jetson Nano 
 ```bash
