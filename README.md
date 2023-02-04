@@ -98,7 +98,8 @@ docker-compose -f docker-compose.robot.yaml up
 - In one, run docker-compose -f docker-compose.robot.test.yaml up
 - In the other run the code below
 ```bash
-docker exec -it <docker image id> bash
+docker ps # list all of the docker containers that are running
+docker exec -it <docker container id> bash
 python3
 import torch
 torch.cuda.is_available()
