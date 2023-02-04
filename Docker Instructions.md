@@ -19,7 +19,7 @@ Create a catkin workspace:
 mkdir -p ~/catkin_ws/src && cd ~/catkin_ws
 catkin init
 cd src
-git clone git@github.com:git@github.com:manx52/ROB498.git
+git clone git@github.com:manx52/ROB498.git
 
 ```
 
