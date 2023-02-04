@@ -80,10 +80,12 @@ echo "xhost +local:docker" >> ~/.bashrc && source ~/.bashrc
 
 
 ### Running Instructions for computer
+- docker-compose.yaml is for a docker container that runs on a normal computer
+- docker-compose.robot.yaml  is for a docker container that runs on a Jetson Nano
 ```bash
 docker-compose pull # Use docker-compose build if you want to build locally
 docker-compose up
-# docker-compose -f docker-compose.robot.yaml up
+# docker-compose -f docker-compose.robot.yaml 
 ```
 
 ### Pull and Run the ARM image for Jetson Nano
