@@ -13,7 +13,7 @@ x-gpu: &gpu
             capabilities: [gpu, compute, utility, graphics]
 
 x-rob498: &rob498 #  <<: *gpu
-  image: manx52/rob498
+  image: utrarobosoccer/rob498
   privileged: true
   user: "1000"
   build:
@@ -23,8 +23,8 @@ x-rob498: &rob498 #  <<: *gpu
       - BUILDKIT_INLINE_CACHE=1
       - USER=${USER}
     cache_from:
-      - manx52/rob498
-      - manx52/rob498_dependencies
+      - utrarobosoccer/rob498
+      - utrarobosoccer/soccerbot_dependencies
   cap_add:
     - SYS_PTRACE
     - SYS_NICE
@@ -35,7 +35,7 @@ x-rob498: &rob498 #  <<: *gpu
     /bin/bash -c "export ROS_MASTER_URI=http://$$(hostname -i):11311 && export ROS_IP=$$(hostname -i)
   volumes:
     - .:/home/$USER/catkin_ws/src/ROB498
-    - .:/home/robosoccer/catkin_ws/src/ROB498
+    - .:/home/rob498/catkin_ws/src/ROB498
     - /tmp/.X11-unix:/tmp/.X11-unix:rw
     - /dev/dri:/dev/dri:rw
     - /dev/snd:/dev/snd:rw

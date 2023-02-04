@@ -1,3 +1,4 @@
+# selectes which distribution of ROS and Ubuntu to use
 ARG BASE_IMAGE=utrarobosoccer/noetic
 
 FROM $BASE_IMAGE as dependencies
@@ -11,6 +12,8 @@ FROM $BASE_IMAGE as builder
 SHELL ["/bin/bash", "-c"]
 
 # Install dependencies
+# Choose which packages to install in docker container
+# Should modify and remove redundancies
 RUN apt-get update && \
     apt-get install -q -y software-properties-common && \
     add-apt-repository ppa:apt-fast/stable -y && \
@@ -25,9 +28,6 @@ RUN apt-get update && apt-fast install -y --no-install-recommends \
     python3-pip \
     python3-catkin-tools \
     python3-protobuf \
-    protobuf-compiler \
-    libprotobuf-dev \
-    libjpeg9-dev \
     wget \
     ccache \
     dirmngr \
@@ -68,10 +68,9 @@ RUN wget --progress=dot:mega https://developer.download.nvidia.com/compute/cuda/
     apt-get update
 RUN DEBIAN_FRONTEND=noninteractive apt-fast -yq --no-install-recommends install cuda libcudnn8 libcudnn8-dev libnccl2 libnccl-dev
 
-RUN pip install --no-cache-dir --upgrade pip Cython pybullet
-
 RUN curl -sSL https://get.docker.com/ | sh
 
+# Important for Jetson Nano
 RUN if [[ "$(dpkg --print-architecture)" == "arm64" ]] ; then \
     apt-get update && \
     apt-get install -y libomp5 libopenblas-dev && \
@@ -84,7 +83,7 @@ RUN if [[ "$(dpkg --print-architecture)" == "arm64" ]] ; then \
     rm -rf torchvision-0.12.0a0+9b5a3fe-cp38-cp38-linux_aarch64.whl; fi
 
 # Create User
-ARG USER="ROB498"
+ARG USER="robosoccer"
 RUN groupadd -g 1000 $USER && \
     useradd -u 1000 -g 1000 -mrs /bin/bash -b /home -p $(openssl passwd -1 $USER) $USER && \
     usermod -aG sudo $USER && \
@@ -118,4 +117,5 @@ RUN source /opt/ros/noetic/setup.bash && catkin config --cmake-args -DCMAKE_BUIL
 RUN source /opt/ros/noetic/setup.bash && catkin build --no-status ROB498
 RUN echo "source /home/$USER/catkin_ws/devel/setup.bash" >> ~/.bashrc
 
+# Necessary for using CUDA
 ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib/aarch64-linux-gnu/tegra:/usr/local/cuda/targets/aarch64-linux/lib/
