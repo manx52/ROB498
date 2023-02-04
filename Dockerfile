@@ -83,7 +83,7 @@ RUN if [[ "$(dpkg --print-architecture)" == "arm64" ]] ; then \
     rm -rf torchvision-0.12.0a0+9b5a3fe-cp38-cp38-linux_aarch64.whl; fi
 
 # Create User
-ARG USER="robosoccer"
+ARG USER="drone"
 RUN groupadd -g 1000 $USER && \
     useradd -u 1000 -g 1000 -mrs /bin/bash -b /home -p $(openssl passwd -1 $USER) $USER && \
     usermod -aG sudo $USER && \

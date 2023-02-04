@@ -35,7 +35,7 @@ x-rob498: &rob498 #  <<: *gpu
     /bin/bash -c "export ROS_MASTER_URI=http://$$(hostname -i):11311 && export ROS_IP=$$(hostname -i)
   volumes:
     - .:/home/$USER/catkin_ws/src/ROB498
-    - .:/home/rob498/catkin_ws/src/ROB498
+    - .:/home/drone/catkin_ws/src/ROB498
     - /tmp/.X11-unix:/tmp/.X11-unix:rw
     - /dev/dri:/dev/dri:rw
     - /dev/snd:/dev/snd:rw
