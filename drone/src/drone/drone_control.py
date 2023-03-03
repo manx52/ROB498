@@ -79,5 +79,3 @@ class DroneControl:
 
             r.sleep()
 
-        # while not rospy.is_shutdown():
-        #     r.sleep()

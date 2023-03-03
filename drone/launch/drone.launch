@@ -22,7 +22,7 @@
 <!--    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" />-->
 
 
-    <node pkg="drone" type="main.py" name="drone" required="true" output="screen">
+    <node pkg="drone" type="drone_comm.py" name="drone" required="true" output="screen">
     </node>
 
     <include file="$(find drone)/launch/bridge_mavros.launch" unless="$(arg simulation)">
