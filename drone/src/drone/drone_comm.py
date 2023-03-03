@@ -135,7 +135,7 @@ class DroneComm:
 
         arm_cmd = CommandBoolRequest()
         arm_cmd.value = True
-        while not rospy.is_shutdown():
+        while not rospy.is_shutdown(): # TODO need a time limit
             if self.current_state.mode != "OFFBOARD" and (rospy.Time.now() - last_req) > rospy.Duration(5.0):
                 if self.set_mode_client.call(offb_set_mode).mode_sent:
                     rospy.loginfo("OFFBOARD enabled")
