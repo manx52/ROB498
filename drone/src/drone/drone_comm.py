@@ -40,10 +40,6 @@ class DroneComm:
         self.set_mode_client = rospy.ServiceProxy("mavros/set_mode", SetMode)
 
         self.r = rospy.Rate(20)
-        # Wait for Flight Controller connection
-        while not rospy.is_shutdown() and not self.current_state.connected:
-            self.r.sleep()
-
 
     # Callback handlers
     def pose_callback(self, msg):
@@ -55,8 +51,12 @@ class DroneComm:
     def vicon_callback(self, msg):
         if self.vicon_enabled:
             self.drone_vicon_pose = msg
+
     def handle_launch(self):
         print('Launch Requested. Your drone should take off.')
+        while not rospy.is_shutdown() and not self.current_state.connected:
+            self.r.sleep()
+
         pose = PoseStamped()
 
         pose.pose.position.x = 0
@@ -71,35 +71,44 @@ class DroneComm:
             self.local_pos_pub.publish(pose)
             self.r.sleep()
 
-        # offb_set_mode = SetModeRequest()
-        # offb_set_mode.custom_mode = 'OFFBOARD'
-        #
-        # arm_cmd = CommandBoolRequest()
-        # arm_cmd.value = True
+        offb_set_mode = SetModeRequest()
+        offb_set_mode.custom_mode = 'OFFBOARD'
+
+        arm_cmd = CommandBoolRequest()
+        arm_cmd.value = True
 
         last_req = rospy.Time.now()
         x_diff = pose.pose.position.x - self.drone_onboard_pose.pose.position.x
         y_diff = pose.pose.position.y - self.drone_onboard_pose.pose.position.y
         z_diff = pose.pose.position.z - self.drone_onboard_pose.pose.position.z
-        error_pose = math.sqrt(x_diff ** 2 + y_diff ** 2 + y_diff ** 2)
-        while error_pose > 0.1:
-            # if self.current_state.mode != "OFFBOARD" and (rospy.Time.now() - last_req) > rospy.Duration(5.0):
-            #     if self.set_mode_client.call(offb_set_mode).mode_sent:
-            #         rospy.loginfo("OFFBOARD enabled")
-            #
-            #     last_req = rospy.Time.now()
-            # else:
-            #     if not self.current_state.armed and (rospy.Time.now() - last_req) > rospy.Duration(5.0):
-            #         if self.arm_client.call(CommandBoolRequest().value).success:
-            #             rospy.loginfo("Vehicle armed")
+        error_pose = math.sqrt(x_diff ** 2 + y_diff ** 2 + z_diff ** 2)
+        while error_pose > 0.01:
 
-                    # last_req = rospy.Time.now()
+            if self.current_state.mode != "OFFBOARD" and (rospy.Time.now() - last_req) > rospy.Duration(5.0):
+                if self.set_mode_client.call(offb_set_mode).mode_sent:
+                    rospy.loginfo("OFFBOARD enabled")
+
+                last_req = rospy.Time.now()
+            else:
+                if not self.current_state.armed and (rospy.Time.now() - last_req) > rospy.Duration(5.0):
+                    if self.arm_client.call(arm_cmd).success:
+                        rospy.loginfo("Vehicle armed")
+
+                    last_req = rospy.Time.now()
             x_diff = pose.pose.position.x - self.drone_onboard_pose.pose.position.x
             y_diff = pose.pose.position.y - self.drone_onboard_pose.pose.position.y
             z_diff = pose.pose.position.z - self.drone_onboard_pose.pose.position.z
-            error_pose = math.sqrt(x_diff**2 + y_diff**2 + y_diff**2)
+            error_pose = math.sqrt(x_diff ** 2 + y_diff ** 2 + z_diff ** 2)
+            print(error_pose)
             self.local_pos_pub.publish(pose)
 
+            self.r.sleep()
+        # Send a few setpoints before starting
+        for i in range(100):
+            if rospy.is_shutdown():
+                break
+
+            self.local_pos_pub.publish(pose)
             self.r.sleep()
 
     def handle_test(self):
@@ -121,11 +130,27 @@ class DroneComm:
             self.local_pos_pub.publish(pose)
             self.r.sleep()
 
-        while not rospy.is_shutdown():
+        offb_set_mode = SetModeRequest()
+        offb_set_mode.custom_mode = 'OFFBOARD'
 
+        arm_cmd = CommandBoolRequest()
+        arm_cmd.value = True
+        while not rospy.is_shutdown():
+            if self.current_state.mode != "OFFBOARD" and (rospy.Time.now() - last_req) > rospy.Duration(5.0):
+                if self.set_mode_client.call(offb_set_mode).mode_sent:
+                    rospy.loginfo("OFFBOARD enabled")
+
+                last_req = rospy.Time.now()
+            else:
+                if not self.current_state.armed and (rospy.Time.now() - last_req) > rospy.Duration(5.0):
+                    if self.arm_client.call(arm_cmd).success:
+                        rospy.loginfo("Vehicle armed")
+
+                last_req = rospy.Time.now()
             self.local_pos_pub.publish(pose)
 
             self.r.sleep()
+
     def handle_land(self):
         print('Land Requested. Your drone should land.')
         pose = PoseStamped()
@@ -142,35 +167,42 @@ class DroneComm:
             self.local_pos_pub.publish(pose)
             self.r.sleep()
 
-        # offb_set_mode = SetModeRequest()
-        # offb_set_mode.custom_mode = 'OFFBOARD'
-        #
-        # arm_cmd = CommandBoolRequest()
-        # arm_cmd.value = True
+        offb_set_mode = SetModeRequest()
+        offb_set_mode.custom_mode = 'OFFBOARD'
+
+        arm_cmd = CommandBoolRequest()
+        arm_cmd.value = True
 
         last_req = rospy.Time.now()
         x_diff = pose.pose.position.x - self.drone_onboard_pose.pose.position.x
         y_diff = pose.pose.position.y - self.drone_onboard_pose.pose.position.y
         z_diff = pose.pose.position.z - self.drone_onboard_pose.pose.position.z
-        error_pose = math.sqrt(x_diff ** 2 + y_diff ** 2 + y_diff ** 2)
-        while error_pose > 0.1:
-            # if self.current_state.mode != "OFFBOARD" and (rospy.Time.now() - last_req) > rospy.Duration(5.0):
-            #     if self.set_mode_client.call(offb_set_mode).mode_sent:
-            #         rospy.loginfo("OFFBOARD enabled")
-            #
-            #     last_req = rospy.Time.now()
-            # else:
-            #     if not self.current_state.armed and (rospy.Time.now() - last_req) > rospy.Duration(5.0):
-            #         if self.arm_client.call(CommandBoolRequest().value).success:
-            #             rospy.loginfo("Vehicle armed")
+        error_pose = math.sqrt(x_diff ** 2 + y_diff ** 2 + z_diff ** 2)
+        while error_pose > 0.01:
+            if self.current_state.mode != "OFFBOARD" and (rospy.Time.now() - last_req) > rospy.Duration(5.0):
+                if self.set_mode_client.call(offb_set_mode).mode_sent:
+                    rospy.loginfo("OFFBOARD enabled")
 
-            # last_req = rospy.Time.now()
+                last_req = rospy.Time.now()
+            else:
+                if not self.current_state.armed and (rospy.Time.now() - last_req) > rospy.Duration(5.0):
+                    if self.arm_client.call(arm_cmd).success:
+                        rospy.loginfo("Vehicle armed")
+
+                last_req = rospy.Time.now()
             x_diff = pose.pose.position.x - self.drone_onboard_pose.pose.position.x
             y_diff = pose.pose.position.y - self.drone_onboard_pose.pose.position.y
             z_diff = pose.pose.position.z - self.drone_onboard_pose.pose.position.z
-            error_pose = math.sqrt(x_diff ** 2 + y_diff ** 2 + y_diff ** 2)
+            error_pose = math.sqrt(x_diff ** 2 + y_diff ** 2 + z_diff ** 2)
             self.local_pos_pub.publish(pose)
 
+            self.r.sleep()
+        # Send a few setpoints before starting
+        for i in range(100):
+            if rospy.is_shutdown():
+                break
+
+            self.local_pos_pub.publish(pose)
             self.r.sleep()
 
     def handle_abort(self):
@@ -189,33 +221,34 @@ class DroneComm:
             self.local_pos_pub.publish(pose)
             self.r.sleep()
 
-        # offb_set_mode = SetModeRequest()
-        # offb_set_mode.custom_mode = 'OFFBOARD'
-        #
-        # arm_cmd = CommandBoolRequest()
-        # arm_cmd.value = True
+        offb_set_mode = SetModeRequest()
+        offb_set_mode.custom_mode = 'OFFBOARD'
+
+        arm_cmd = CommandBoolRequest()
+        arm_cmd.value = True
 
         last_req = rospy.Time.now()
         x_diff = pose.pose.position.x - self.drone_onboard_pose.pose.position.x
         y_diff = pose.pose.position.y - self.drone_onboard_pose.pose.position.y
         z_diff = pose.pose.position.z - self.drone_onboard_pose.pose.position.z
-        error_pose = math.sqrt(x_diff ** 2 + y_diff ** 2 + y_diff ** 2)
-        while error_pose > 0.1:
-            # if self.current_state.mode != "OFFBOARD" and (rospy.Time.now() - last_req) > rospy.Duration(5.0):
-            #     if self.set_mode_client.call(offb_set_mode).mode_sent:
-            #         rospy.loginfo("OFFBOARD enabled")
-            #
-            #     last_req = rospy.Time.now()
-            # else:
-            #     if not self.current_state.armed and (rospy.Time.now() - last_req) > rospy.Duration(5.0):
-            #         if self.arm_client.call(CommandBoolRequest().value).success:
-            #             rospy.loginfo("Vehicle armed")
+        error_pose = math.sqrt(x_diff ** 2 + y_diff ** 2 + z_diff ** 2)
+        while error_pose > 0.01:
+            if self.current_state.mode != "OFFBOARD" and (rospy.Time.now() - last_req) > rospy.Duration(5.0):
+                if self.set_mode_client.call(offb_set_mode).mode_sent:
+                    rospy.loginfo("OFFBOARD enabled")
 
-            # last_req = rospy.Time.now()
+                last_req = rospy.Time.now()
+            else:
+                if not self.current_state.armed and (rospy.Time.now() - last_req) > rospy.Duration(5.0):
+                    if self.arm_client.call(arm_cmd).success:
+                        rospy.loginfo("Vehicle armed")
+
+                last_req = rospy.Time.now()
             x_diff = pose.pose.position.x - self.drone_onboard_pose.pose.position.x
             y_diff = pose.pose.position.y - self.drone_onboard_pose.pose.position.y
             z_diff = pose.pose.position.z - self.drone_onboard_pose.pose.position.z
-            error_pose = math.sqrt(x_diff ** 2 + y_diff ** 2 + y_diff ** 2)
+            error_pose = math.sqrt(x_diff ** 2 + y_diff ** 2 + z_diff ** 2)
+
             self.local_pos_pub.publish(pose)
 
             self.r.sleep()
@@ -225,22 +258,23 @@ class DroneComm:
         self.handle_launch()
         return EmptyResponse()
 
-    def callback_test(self,request):
+    def callback_test(self, request):
         self.handle_test()
         return EmptyResponse()
 
-    def callback_land(self,request):
+    def callback_land(self, request):
         self.handle_land()
         return EmptyResponse()
 
-    def callback_abort(self,request):
+    def callback_abort(self, request):
         self.handle_abort()
         return EmptyResponse()
 
     # Main communication node for ground control
     def run(self):
         # Your code goes below
-        rospy.spin()
+        while not rospy.is_shutdown():
+            self.r.sleep()
 
 
 if __name__ == "__main__":
