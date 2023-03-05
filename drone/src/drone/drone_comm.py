@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 import math
 
 import rospy
@@ -41,7 +41,7 @@ class DroneComm:
         rospy.wait_for_service("/mavros/set_mode")
         self.set_mode_client = rospy.ServiceProxy("mavros/set_mode", SetMode)
 
-        self.r = rospy.Rate(20)
+        self.r = rospy.Rate(30)
 
     # Callback handlers
     def pose_callback(self, msg):
@@ -63,7 +63,7 @@ class DroneComm:
 
         pose.pose.position.x = 0
         pose.pose.position.y = 0
-        pose.pose.position.z = 1.5
+        pose.pose.position.z = 1.0
 
         # Send a few setpoints before starting
         for i in range(100):
@@ -111,13 +111,13 @@ class DroneComm:
         print('Test Requested. Your drone should perform the required tasks. Recording starts now.')
         pose = PoseStamped()
 
-        pose.pose.position.x = 0
+        pose.pose.position.x = 1.0
         pose.pose.position.y = 0
-        pose.pose.position.z = 1.5
-        pose.pose.orientation.x = 0
-        pose.pose.orientation.y = 0
-        pose.pose.orientation.z = 0
-        pose.pose.orientation.w = 1
+        pose.pose.position.z = 1.0
+        #pose.pose.orientation.x = 0
+        #pose.pose.orientation.y = 0
+        #pose.pose.orientation.z = 0
+        #pose.pose.orientation.w = 1
         # Send a few setpoints before starting
         for i in range(100):
             if rospy.is_shutdown():
@@ -143,7 +143,7 @@ class DroneComm:
                         rospy.loginfo("Vehicle armed")
 
                 last_req = rospy.Time.now()
-            #print("Launch: ", error_pose)
+            print("Test: ", error_pose)
             self.local_pos_pub.publish(pose)
 
             self.r.sleep()
@@ -152,9 +152,9 @@ class DroneComm:
         print('Land Requested. Your drone should land.')
         pose = PoseStamped()
 
-        pose.pose.position.x = 0
-        pose.pose.position.y = 0
-        pose.pose.position.z = 0
+        pose.pose.position.x = self.drone_onboard_pose.pose.position.x
+        pose.pose.position.y = self.drone_onboard_pose.pose.position.y
+        pose.pose.position.z = -0.3
 
         # Send a few setpoints before starting
         for i in range(100):
