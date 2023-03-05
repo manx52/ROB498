@@ -21,6 +21,8 @@ class DroneComm:
         self.srv_test = rospy.Service(node_name + '/comm/test', Empty, self.callback_test)
         self.srv_land = rospy.Service(node_name + '/comm/land', Empty, self.callback_land)
         self.srv_abort = rospy.Service(node_name + '/comm/abort', Empty, self.callback_abort)
+        self.bool_launch = False
+        self.bool_test = False
 
         self.drone_onboard_pose = PoseStamped()
         self.drone_vicon_pose = PoseStamped()
@@ -82,7 +84,7 @@ class DroneComm:
         y_diff = pose.pose.position.y - self.drone_onboard_pose.pose.position.y
         z_diff = pose.pose.position.z - self.drone_onboard_pose.pose.position.z
         error_pose = math.sqrt(x_diff ** 2 + y_diff ** 2 + z_diff ** 2)
-        while error_pose > 0.01:
+        while error_pose > 0.05 or self.bool_launch:
 
             if self.current_state.mode != "OFFBOARD" and (rospy.Time.now() - last_req) > rospy.Duration(5.0):
                 if self.set_mode_client.call(offb_set_mode).mode_sent:
@@ -99,17 +101,11 @@ class DroneComm:
             y_diff = pose.pose.position.y - self.drone_onboard_pose.pose.position.y
             z_diff = pose.pose.position.z - self.drone_onboard_pose.pose.position.z
             error_pose = math.sqrt(x_diff ** 2 + y_diff ** 2 + z_diff ** 2)
-            print(error_pose)
+            print("Launch: ", error_pose)
             self.local_pos_pub.publish(pose)
 
             self.r.sleep()
-        # Send a few setpoints before starting
-        for i in range(100):
-            if rospy.is_shutdown():
-                break
 
-            self.local_pos_pub.publish(pose)
-            self.r.sleep()
 
     def handle_test(self):
         print('Test Requested. Your drone should perform the required tasks. Recording starts now.')
@@ -135,7 +131,7 @@ class DroneComm:
 
         arm_cmd = CommandBoolRequest()
         arm_cmd.value = True
-        while not rospy.is_shutdown(): # TODO need a time limit
+        while self.bool_test: # TODO need a time limit
             if self.current_state.mode != "OFFBOARD" and (rospy.Time.now() - last_req) > rospy.Duration(5.0):
                 if self.set_mode_client.call(offb_set_mode).mode_sent:
                     rospy.loginfo("OFFBOARD enabled")
@@ -147,6 +143,7 @@ class DroneComm:
                         rospy.loginfo("Vehicle armed")
 
                 last_req = rospy.Time.now()
+            #print("Launch: ", error_pose)
             self.local_pos_pub.publish(pose)
 
             self.r.sleep()
@@ -174,11 +171,10 @@ class DroneComm:
         arm_cmd.value = True
 
         last_req = rospy.Time.now()
-        x_diff = pose.pose.position.x - self.drone_onboard_pose.pose.position.x
-        y_diff = pose.pose.position.y - self.drone_onboard_pose.pose.position.y
+
         z_diff = pose.pose.position.z - self.drone_onboard_pose.pose.position.z
-        error_pose = math.sqrt(x_diff ** 2 + y_diff ** 2 + z_diff ** 2)
-        while error_pose > 0.01:
+        error_pose = math.sqrt(z_diff ** 2)
+        while error_pose > 0.15:
             if self.current_state.mode != "OFFBOARD" and (rospy.Time.now() - last_req) > rospy.Duration(5.0):
                 if self.set_mode_client.call(offb_set_mode).mode_sent:
                     rospy.loginfo("OFFBOARD enabled")
@@ -190,20 +186,14 @@ class DroneComm:
                         rospy.loginfo("Vehicle armed")
 
                 last_req = rospy.Time.now()
-            x_diff = pose.pose.position.x - self.drone_onboard_pose.pose.position.x
-            y_diff = pose.pose.position.y - self.drone_onboard_pose.pose.position.y
+
             z_diff = pose.pose.position.z - self.drone_onboard_pose.pose.position.z
-            error_pose = math.sqrt(x_diff ** 2 + y_diff ** 2 + z_diff ** 2)
+            error_pose = math.sqrt( z_diff ** 2)
+            print("Land: ", error_pose)
             self.local_pos_pub.publish(pose)
 
             self.r.sleep()
-        # Send a few setpoints before starting
-        for i in range(100):
-            if rospy.is_shutdown():
-                break
 
-            self.local_pos_pub.publish(pose)
-            self.r.sleep()
 
     def handle_abort(self):
         print('Abort Requested. Your drone should land immediately due to safety considerations')
@@ -228,10 +218,8 @@ class DroneComm:
         arm_cmd.value = True
 
         last_req = rospy.Time.now()
-        x_diff = pose.pose.position.x - self.drone_onboard_pose.pose.position.x
-        y_diff = pose.pose.position.y - self.drone_onboard_pose.pose.position.y
         z_diff = pose.pose.position.z - self.drone_onboard_pose.pose.position.z
-        error_pose = math.sqrt(x_diff ** 2 + y_diff ** 2 + z_diff ** 2)
+        error_pose = math.sqrt( z_diff ** 2)
         while error_pose > 0.01:
             if self.current_state.mode != "OFFBOARD" and (rospy.Time.now() - last_req) > rospy.Duration(5.0):
                 if self.set_mode_client.call(offb_set_mode).mode_sent:
@@ -244,10 +232,9 @@ class DroneComm:
                         rospy.loginfo("Vehicle armed")
 
                 last_req = rospy.Time.now()
-            x_diff = pose.pose.position.x - self.drone_onboard_pose.pose.position.x
-            y_diff = pose.pose.position.y - self.drone_onboard_pose.pose.position.y
+
             z_diff = pose.pose.position.z - self.drone_onboard_pose.pose.position.z
-            error_pose = math.sqrt(x_diff ** 2 + y_diff ** 2 + z_diff ** 2)
+            error_pose = math.sqrt( z_diff ** 2)
 
             self.local_pos_pub.publish(pose)
 
@@ -255,18 +242,26 @@ class DroneComm:
 
     # Service callbacks
     def callback_launch(self, request):
+        self.bool_launch = True
+        self.bool_test = False
         self.handle_launch()
         return EmptyResponse()
 
     def callback_test(self, request):
+        self.bool_launch = False
+        self.bool_test = True
         self.handle_test()
         return EmptyResponse()
 
     def callback_land(self, request):
+        self.bool_launch = False
+        self.bool_test = False
         self.handle_land()
         return EmptyResponse()
 
     def callback_abort(self, request):
+        self.bool_launch = False
+        self.bool_test = False
         self.handle_abort()
         return EmptyResponse()
 
