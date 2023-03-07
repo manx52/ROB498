@@ -84,7 +84,7 @@ class DroneComm:
         y_diff = pose.pose.position.y - self.drone_onboard_pose.pose.position.y
         z_diff = pose.pose.position.z - self.drone_onboard_pose.pose.position.z
         error_pose = math.sqrt(x_diff ** 2 + y_diff ** 2 + z_diff ** 2)
-        while error_pose > 0.05 or self.bool_launch:
+        while self.bool_launch:
 
             if self.current_state.mode != "OFFBOARD" and (rospy.Time.now() - last_req) > rospy.Duration(5.0):
                 if self.set_mode_client.call(offb_set_mode).mode_sent:
