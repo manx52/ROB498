@@ -63,7 +63,7 @@ class DroneComm:
 
         pose.pose.position.x = 0
         pose.pose.position.y = 0
-        pose.pose.position.z = 1.0
+        pose.pose.position.z = 1.5
 
         # Send a few setpoints before starting
         for i in range(100):
@@ -111,9 +111,9 @@ class DroneComm:
         print('Test Requested. Your drone should perform the required tasks. Recording starts now.')
         pose = PoseStamped()
 
-        pose.pose.position.x = 1.0
+        pose.pose.position.x = 0
         pose.pose.position.y = 0
-        pose.pose.position.z = 1.0
+        pose.pose.position.z = 1.5
         #pose.pose.orientation.x = 0
         #pose.pose.orientation.y = 0
         #pose.pose.orientation.z = 0
