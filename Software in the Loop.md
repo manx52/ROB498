@@ -49,14 +49,19 @@ bash ubuntu_sim_ros_noetic.sh
 ## close the terminal and open it again
 cd ~/catkin_ws/src/Firmware
 git submodule update --init --recursive
+sudo apt-get install libprotobuf-dev libprotoc-dev protobuf-compiler libeigen3-dev libxml2-utils python3-rospkg python-jinja2
+sudo apt-get install libgstreamer-plugins-base1.0-dev gstreamer1.0-plugins-bad gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-ugly -y
+
 DONT_RUN=1 make px4_sitl_default gazebo-classic
 
-Add this to
-export PX_HOME=/home/manx52/catkin_ws/src/Firmware
+Add this to your ~/.bashrc
+
+export PX_HOME=$HOME/catkin_ws/src/Firmware
 source ${PX_HOME}/Tools/simulation/gazebo-classic/setup_gazebo.bash ${PX_HOME} ${PX_HOME}/build/px4_sitl_default
 export ROS_PACKAGE_PATH=$ROS_PACKAGE_PATH:${PX_HOME}:${PX_HOME}/Tools/simulation/gazebo-classic/sitl_gazebo-classic
 
-## Make sure to add the above inside the .bashrc file if you want to run it everytime from the terminal. The $pwd should be replaced with the path to Firmware folder.
+source ~/.bashrc
+## Make sure to add the above inside the .bashrc file if you want to run it everytime from the terminal.
 
 roslaunch px4 multi_uav_mavros_sitl.launch
 
