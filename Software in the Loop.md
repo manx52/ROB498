@@ -86,7 +86,19 @@ source ~/.bashrc
 ```
 ## Other Instructions
 - Sometimes you need to ```bashsource ~/.bashrc``` in a terminal to get it to work
+- To exit gazebo quicker run 
+```bash
+# For melodic
+sudo gedit /opt/ros/melodic/lib/python2.7/dist-packages/roslaunch/nodeprocess.py
 
+# For noetic
+sudo gedit /opt/ros/noetic/lib/python3/dist-packages/roslaunch/nodeprocess.py
+```
+ ##### change these 2 lines
+ ```bash
+ _TIMEOUT_SIGINT  = 0.5 #seconds
+_TIMEOUT_SIGTERM = 0.5 #seconds
+```
 #### Launching simulation
 ```bash
 cd ~/catkin_ws
