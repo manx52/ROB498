@@ -7,7 +7,7 @@
     </node>
 
     <!-- Simulation vio -->
-	<node pkg="drone" type="sim_odom" name="sim_odom" output="screen" if="$(arg simulation)" />
+<!--	<node pkg="drone" type="sim_odom" name="sim_odom" output="screen" if="$(arg simulation)" />-->
 
     <include file="$(find drone)/launch/bridge_mavros.launch" unless="$(arg simulation)">
 
