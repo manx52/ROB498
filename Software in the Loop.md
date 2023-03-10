@@ -59,7 +59,7 @@ bash ./Tools/setup/ubuntu.sh
 - or download wget https://raw.githubusercontent.com/ktelegenov/scripts/main/ubuntu_sim_ros_noetic.sh
 #### After script is found/downloaded run
 ```bash
-#For melodic
+# For melodic
 bash ubuntu_sim_ros_melodic.sh
 
 # For noetic 
