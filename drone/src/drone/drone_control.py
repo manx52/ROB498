@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import rospy
-from geometry_msgs.msg import Pose, PoseStamped, PoseWithCovarianceStamped
+from geometry_msgs.msg import Pose, PoseStamped, PoseWithCovarianceStamped, TransformStamped
 from mavros_msgs.msg import State
 from mavros_msgs.srv import CommandBool, CommandBoolRequest, SetMode, SetModeRequest
 
@@ -8,13 +8,13 @@ from mavros_msgs.srv import CommandBool, CommandBoolRequest, SetMode, SetModeReq
 class DroneControl:
     def __init__(self):
         self.drone_onboard_pose = PoseStamped()
-        self.drone_vicon_pose = PoseStamped()
+        self.drone_vicon_pose = TransformStamped()
         self.current_state = State()
 
         self.local_pos_sub = rospy.Subscriber('mavros/local_position/pose', PoseStamped, self.pose_callback)
         self.state_sub = rospy.Subscriber('mavros/state', State, self.state_callback)
         self.local_pos_pub = rospy.Publisher("mavros/setpoint_position/local", PoseStamped, queue_size=10)
-        self.vicon_sub = rospy.Subscriber("/vicon/VICON_NAME/VICON_NAME", PoseStamped, self.vicon_callback)
+        self.vicon_sub = rospy.Subscriber("/vicon/VICON_NAME/VICON_NAME", TransformStamped, self.vicon_callback)
 
         self.vicon_enabled = False
 

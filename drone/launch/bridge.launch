@@ -9,7 +9,6 @@
   <node pkg="tf" type="static_transform_publisher" name="tf_odom_cameraOdom"
         args="0 0 0 0 0 0 odom camera_odom_frame 1000"/>
 
-
   <!-- launch node to throttle images for logging -->
   <node name="drop_image1" pkg="topic_tools" type="drop" output="screen"
     args="/camera/fisheye1/image_raw  9 10">
