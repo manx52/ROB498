@@ -31,9 +31,9 @@ sudo apt install ros-$ROS_DISTRO-mavros ros-$ROS_DISTRO-mavros-extras
 sudo apt install ros-$ROS_DISTRO-pcl-ros
 ```
 
-### 4. Install install_geographiclib_datasets
+### 4. Install Geographiclib Datasets
 
-- found in ```bash cd ~/catkin_ws/src/ROB498/drone/scripts/```
+- found in ``` cd ~/catkin_ws/src/ROB498/drone/scripts/```
 - or download https://raw.githubusercontent.com/mavlink/mavros/master/mavros/scripts/install_geographiclib_datasets.sh\
 #### After script is found/downloaded run
 ```bash
@@ -55,7 +55,7 @@ bash ./Tools/setup/ubuntu.sh
 ```
 
 #### reboot computer
-- found in ```bash cd ~/catkin_ws/src/ROB498/drone/scripts/```
+- found in ``` cd ~/catkin_ws/src/ROB498/drone/scripts/```
 - or download wget https://raw.githubusercontent.com/ktelegenov/scripts/main/ubuntu_sim_ros_noetic.sh
 #### After script is found/downloaded run
 ```bash
@@ -86,7 +86,19 @@ source ~/.bashrc
 ```
 ## Other Instructions
 - Sometimes you need to ```bashsource ~/.bashrc``` in a terminal to get it to work
+- To exit gazebo quicker run 
+```bash
+# For melodic
+sudo gedit /opt/ros/melodic/lib/python2.7/dist-packages/roslaunch/nodeprocess.py
 
+# For noetic
+sudo gedit /opt/ros/noetic/lib/python3/dist-packages/roslaunch/nodeprocess.py
+```
+ ##### change these 2 lines
+ ```bash
+ _TIMEOUT_SIGINT  = 0.5 #seconds
+_TIMEOUT_SIGTERM = 0.5 #seconds
+```
 #### Launching simulation
 ```bash
 cd ~/catkin_ws
