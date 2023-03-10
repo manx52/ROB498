@@ -35,7 +35,7 @@ class DroneComm:
         self.bool_land = False
         self.bool_abort = False
         self.vicon_enabled = False
-        self.challenge2 = False
+        self.challenge2 = True
 
         # Var
         self.drone_onboard_pose = PoseStamped()
@@ -155,7 +155,6 @@ class DroneComm:
             #     Pose(pt8, q1),
             # ]
 
-
     def handle_land(self):
         print('Land Requested. Your drone should land.')
         self.bool_launch = False
@@ -164,8 +163,8 @@ class DroneComm:
         self.bool_abort = False
 
         self.waypoint_goal.header.stamp = rospy.Time.now()
-        self.waypoint_goal.pose.position.x = self.drone_onboard_pose.pose.position.x
-        self.waypoint_goal.pose.position.y = self.drone_onboard_pose.pose.position.y
+        self.waypoint_goal.pose.position.x = 0  # self.drone_onboard_pose.pose.position.x
+        self.waypoint_goal.pose.position.y = 0  # self.drone_onboard_pose.pose.position.y
         self.waypoint_goal.pose.position.z = -0.3 - self.offset
 
     def handle_abort(self):
@@ -176,8 +175,8 @@ class DroneComm:
         self.bool_abort = True
 
         self.waypoint_goal.header.stamp = rospy.Time.now()
-        self.waypoint_goal.pose.position.x = self.drone_onboard_pose.pose.position.x
-        self.waypoint_goal.pose.position.y = self.drone_onboard_pose.pose.position.y
+        self.waypoint_goal.pose.position.x = 0  # self.drone_onboard_pose.pose.position.x
+        self.waypoint_goal.pose.position.y = 0  # self.drone_onboard_pose.pose.position.y
         self.waypoint_goal.pose.position.z = -0.3 - self.offset
 
     # Service callbacks
@@ -245,14 +244,14 @@ class DroneComm:
 
                     last_req = rospy.Time.now()
             # Update waypoint
-            if self.bool_test:
+            if self.bool_test and not self.challenge2:
                 # Are we there yet?
                 pose = PoseStamped()
                 pose.header.stamp = rospy.Time.now()
                 pose.pose = self.waypoints.poses[self.waypoint_index]
                 error_pose = self.waypoint_error(pose)
 
-                if error_pose < 0.1 and self.waypoint_index < (len(self.waypoints.poses)-1):  # TODO tune
+                if error_pose < 0.1 and self.waypoint_index < (len(self.waypoints.poses) - 1):  # TODO tune
                     self.waypoint_index += 1
                     pose.header.stamp = rospy.Time.now()
                     pose.pose = self.waypoints.poses[self.waypoint_index]
