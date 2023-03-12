@@ -74,7 +74,7 @@ class DroneComm:
         self.local_pos_sub = rospy.Subscriber('mavros/local_position/pose', PoseStamped, self.pose_callback)
         self.state_sub = rospy.Subscriber('mavros/state', State, self.state_callback)
         self.vicon_sub = rospy.Subscriber("/vicon/ROB498_Drone/ROB498_Drone", TransformStamped, self.vicon_callback)
-        self.sub_waypoints = rospy.Subscriber(node_name + '/comm/waypoints', PoseArray, self.callback_waypoints)
+        self.sub_waypoints = rospy.Subscriber('/comm/waypoints', PoseArray, self.callback_waypoints)
 
         # Publishers
         self.local_pos_pub = rospy.Publisher("mavros/setpoint_position/local", PoseStamped, queue_size=10)

@@ -1,5 +1,5 @@
 <launch>
-    <arg name="simulation" default="true" />
+    <arg name="simulation" default="false" />
     <param name="simulation" type="bool" value="$(arg simulation)" />
 
     <!-- Our node to control the drone -->
