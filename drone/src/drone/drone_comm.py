@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 import math
 import rospy
-from geometry_msgs.msg import Pose, PoseStamped, PoseArray, TransformStamped, Point, Quaternion
+from geometry_msgs.msg import Twist, Pose, PoseStamped, PoseArray, TransformStamped, Point, Quaternion
 from mavros_msgs.msg import State
 from mavros_msgs.srv import CommandBool, CommandBoolRequest, SetMode, SetModeRequest
 from std_srvs.srv import Empty, EmptyResponse
 from nav_msgs.msg import Odometry
+import numpy as np
 
 
 class DroneComm:
@@ -24,10 +25,10 @@ class DroneComm:
 
         # Simulation
         self.sim = rospy.get_param("/simulation")
-        if self.sim:
-            # self.gazebo_odom_sub = rospy.Subscriber('mavros/local_position/pose', Odometry, self.odom_callback)
-            # self.vio_odom_sub = rospy.Subscriber('/camera/odom/sample_throttled', Odometry, self.odom_callback)
-            self.mavros_odom_pub_ = rospy.Publisher("/mavros/odometry/out", Odometry, queue_size=10)
+        # if self.sim:
+        #     # self.gazebo_odom_sub = rospy.Subscriber('mavros/local_position/pose', Odometry, self.odom_callback)
+        #     # self.vio_odom_sub = rospy.Subscriber('/camera/odom/sample_throttled', Odometry, self.odom_callback)
+        #     self.mavros_odom_pub_ = rospy.Publisher("/mavros/odometry/out", Odometry, queue_size=10)
 
         # Flags
         self.bool_launch = False
@@ -41,6 +42,7 @@ class DroneComm:
         self.drone_onboard_pose = PoseStamped()
         self.drone_vicon_pose = PoseStamped()
 
+        self.WAYPOINTS_RECEIVED = False
         self.waypoint_goal = PoseStamped()
         self.waypoint_goal.header.stamp = rospy.Time.now()
         # self.waypoint_goal.header.frame_id = "world"  # TODO
@@ -48,10 +50,10 @@ class DroneComm:
         self.waypoint_goal.pose.position.y = 0
         self.waypoint_goal.pose.position.z = 0
         self.waypoints = PoseArray()
-        self.waypoints.header.stamp = rospy.Time.now()
         # self.waypoints.header.frame_id = "world"  # TODO
         self.waypoint_index = 0
-
+        self.local_waypoint = PoseArray()
+        self.local_waypoint_index = 0
         self.current_state = State()
         self.r = rospy.Rate(30)
 
@@ -72,9 +74,11 @@ class DroneComm:
         self.local_pos_sub = rospy.Subscriber('mavros/local_position/pose', PoseStamped, self.pose_callback)
         self.state_sub = rospy.Subscriber('mavros/state', State, self.state_callback)
         self.vicon_sub = rospy.Subscriber("/vicon/ROB498_Drone/ROB498_Drone", TransformStamped, self.vicon_callback)
+        self.sub_waypoints = rospy.Subscriber(node_name + '/comm/waypoints', PoseArray, self.callback_waypoints)
 
         # Publishers
         self.local_pos_pub = rospy.Publisher("mavros/setpoint_position/local", PoseStamped, queue_size=10)
+        self.setpoint_vel_pub = rospy.Publisher("mavros/setpoint_velocity/cmd_vel_unstamped", Twist, queue_size=10)
         self.vicon_pose_pub = rospy.Publisher("mavros/vision_pose/pose", PoseStamped, queue_size=10)
 
     # Callback Sensors
@@ -121,41 +125,42 @@ class DroneComm:
             self.waypoint_goal.pose.position.z = self.launch_height - self.offset
         else:
             self.waypoint_index = 0
-
+            waypoints_test = PoseArray()
+            waypoints_test.header.stamp = rospy.Time.now()
             # 4 pt square
-            pt1 = Point(1, 0, self.launch_height - self.offset)
-            pt2 = Point(1, 1, self.launch_height - self.offset)
-            pt3 = Point(0, 1, self.launch_height - self.offset)
-            pt4 = Point(0, 0, self.launch_height - self.offset)
-            q1 = Quaternion(0, 0, 0, 1)
-            self.waypoints.poses = [
-                Pose(pt1, q1),
-                Pose(pt2, q1),
-                Pose(pt3, q1),
-                Pose(pt4, q1)
-            ]
-            # 8 pt square
             # pt1 = Point(1, 0, self.launch_height - self.offset)
             # pt2 = Point(1, 1, self.launch_height - self.offset)
-            # pt3 = Point(1, 2, self.launch_height - self.offset)
-            # pt4 = Point(0, 2, self.launch_height - self.offset)
-            # pt5 = Point(-1, 2, self.launch_height - self.offset)
-            # pt6 = Point(-1, 1, self.launch_height - self.offset)
-            # pt7 = Point(-1, 0, self.launch_height - self.offset)
-            # pt8 = Point(0, 0, self.launch_height - self.offset)
-            #
+            # pt3 = Point(0, 1, self.launch_height - self.offset)
+            # pt4 = Point(0, 0, self.launch_height - self.offset)
             # q1 = Quaternion(0, 0, 0, 1)
-            # self.waypoints.poses = [
+            # waypoints_test.poses = [
             #     Pose(pt1, q1),
             #     Pose(pt2, q1),
             #     Pose(pt3, q1),
-            #     Pose(pt4, q1),
-            #     Pose(pt5, q1),
-            #     Pose(pt6, q1),
-            #     Pose(pt7, q1),
-            #     Pose(pt8, q1),
+            #     Pose(pt4, q1)
             # ]
+            # 8 pt square
+            pt1 = Point(1, 0, self.launch_height - self.offset)
+            pt2 = Point(1, 1, self.launch_height - self.offset)
+            pt3 = Point(1, 2, self.launch_height - self.offset)
+            pt4 = Point(0, 2, self.launch_height - self.offset)
+            pt5 = Point(-1, 2, self.launch_height - self.offset)
+            pt6 = Point(-1, 1, self.launch_height - self.offset)
+            pt7 = Point(-1, 0, self.launch_height - self.offset)
+            pt8 = Point(0, 0, self.launch_height - self.offset)
 
+            q1 = Quaternion(0, 0, 0, 1)
+            waypoints_test.poses = [
+                Pose(pt1, q1),
+                Pose(pt2, q1),
+                Pose(pt3, q1),
+                Pose(pt4, q1),
+                Pose(pt5, q1),
+                Pose(pt6, q1),
+                Pose(pt7, q1),
+                Pose(pt8, q1),
+            ]
+            self.callback_waypoints(waypoints_test)
 
     def handle_land(self):
         print('Land Requested. Your drone should land.')
@@ -165,8 +170,8 @@ class DroneComm:
         self.bool_abort = False
 
         self.waypoint_goal.header.stamp = rospy.Time.now()
-        self.waypoint_goal.pose.position.x = self.drone_onboard_pose.pose.position.x
-        self.waypoint_goal.pose.position.y = self.drone_onboard_pose.pose.position.y
+        self.waypoint_goal.pose.position.x = 0  # self.drone_onboard_pose.pose.position.x
+        self.waypoint_goal.pose.position.y = 0  # self.drone_onboard_pose.pose.position.y
         self.waypoint_goal.pose.position.z = -0.3 - self.offset
 
     def handle_abort(self):
@@ -177,8 +182,8 @@ class DroneComm:
         self.bool_abort = True
 
         self.waypoint_goal.header.stamp = rospy.Time.now()
-        self.waypoint_goal.pose.position.x = self.drone_onboard_pose.pose.position.x
-        self.waypoint_goal.pose.position.y = self.drone_onboard_pose.pose.position.y
+        self.waypoint_goal.pose.position.x = 0  # self.drone_onboard_pose.pose.position.x
+        self.waypoint_goal.pose.position.y = 0  # self.drone_onboard_pose.pose.position.y
         self.waypoint_goal.pose.position.z = -0.3 - self.offset
 
     # Service callbacks
@@ -198,6 +203,14 @@ class DroneComm:
         self.handle_abort()
         return EmptyResponse()
 
+    def callback_waypoints(self, msg):
+        if self.WAYPOINTS_RECEIVED:
+            return
+        rospy.loginfo("Waypoints Received")
+        self.WAYPOINTS_RECEIVED = True
+        self.waypoints.header.stamp = rospy.Time.now()
+        self.waypoints.poses = msg.poses
+
     # Util
     def waypoint_error(self, pose):
         x_diff = pose.pose.position.x - self.drone_onboard_pose.pose.position.x
@@ -206,6 +219,21 @@ class DroneComm:
         error_pose = math.sqrt(x_diff ** 2 + y_diff ** 2 + z_diff ** 2)
 
         return error_pose
+
+    def velocity_command(self, pose):
+        vel = Twist()
+        x_diff = pose.pose.position.x - self.drone_onboard_pose.pose.position.x
+        y_diff = pose.pose.position.y - self.drone_onboard_pose.pose.position.y
+        z_diff = pose.pose.position.z - self.drone_onboard_pose.pose.position.z
+        max_vel = 0.5
+        x_clip = np.clip(x_diff, -max_vel,max_vel)
+        y_clip = np.clip(y_diff, -max_vel, max_vel)
+        z_clip = np.clip(z_diff, -max_vel, max_vel)
+        vel.linear.x = x_clip
+        vel.linear.y = y_clip
+        vel.linear.z = z_clip
+
+        return vel
 
     # Main communication node for ground control
     def run(self):
@@ -224,27 +252,28 @@ class DroneComm:
             self.local_pos_pub.publish(pose)
             self.r.sleep()
 
-        offb_set_mode = SetModeRequest()
-        offb_set_mode.custom_mode = 'OFFBOARD'
+        if self.sim:
+            offb_set_mode = SetModeRequest()
+            offb_set_mode.custom_mode = 'OFFBOARD'
 
-        arm_cmd = CommandBoolRequest()
-        arm_cmd.value = True
+            arm_cmd = CommandBoolRequest()
+            arm_cmd.value = True
 
-        last_req = rospy.Time.now()
+            last_req = rospy.Time.now()
 
         while not rospy.is_shutdown():
-
-            if self.current_state.mode != "OFFBOARD" and (rospy.Time.now() - last_req) > rospy.Duration(5.0):
-                if self.set_mode_client.call(offb_set_mode).mode_sent:
-                    rospy.loginfo("OFFBOARD enabled")
-
-                last_req = rospy.Time.now()
-            else:
-                if not self.current_state.armed and (rospy.Time.now() - last_req) > rospy.Duration(5.0):
-                    if self.arm_client.call(arm_cmd).success:
-                        rospy.loginfo("Vehicle armed")
+            if self.sim:
+                if self.current_state.mode != "OFFBOARD" and (rospy.Time.now() - last_req) > rospy.Duration(5.0):
+                    if self.set_mode_client.call(offb_set_mode).mode_sent:
+                        rospy.loginfo("OFFBOARD enabled")
 
                     last_req = rospy.Time.now()
+                else:
+                    if not self.current_state.armed and (rospy.Time.now() - last_req) > rospy.Duration(5.0):
+                        if self.arm_client.call(arm_cmd).success:
+                            rospy.loginfo("Vehicle armed")
+
+                        last_req = rospy.Time.now()
             # Update waypoint
             if self.bool_test and not self.challenge2:
                 # Are we there yet?
@@ -253,14 +282,16 @@ class DroneComm:
                 pose.pose = self.waypoints.poses[self.waypoint_index]
                 error_pose = self.waypoint_error(pose)
 
-                if error_pose < 0.1 and self.waypoint_index < (len(self.waypoints.poses)-1):  # TODO tune
+                if error_pose < 0.1 and self.waypoint_index < (len(self.waypoints.poses) - 1):  # TODO tune
                     self.waypoint_index += 1
                     pose.header.stamp = rospy.Time.now()
                     pose.pose = self.waypoints.poses[self.waypoint_index]
+
+
             else:
                 pose = self.waypoint_goal
+                error_pose = self.waypoint_error(pose)
 
-            error_pose = self.waypoint_error(pose)
             msg = "Waypoint {index:} error: {error:}"
             rospy.loginfo_throttle(1, msg.format(index=self.waypoint_index, error=error_pose))
 
