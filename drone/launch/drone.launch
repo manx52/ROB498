@@ -1,9 +1,13 @@
 <launch>
     <arg name="simulation" default="true" />
+    <param name="simulation" type="bool" value="$(arg simulation)" />
 
-
-    <node pkg="drone" type="main.py" name="drone" required="true" output="screen">
+    <!-- Our node to control the drone -->
+    <node pkg="drone" type="drone_comm.py" name="drone" required="true" output="screen">
     </node>
+
+    <!-- Simulation vio -->
+<!--	<node pkg="drone" type="sim_odom" name="sim_odom" output="screen" if="$(arg simulation)" />-->
 
     <include file="$(find drone)/launch/bridge_mavros.launch" unless="$(arg simulation)">
 
