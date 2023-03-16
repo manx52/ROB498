@@ -54,4 +54,5 @@ services:
       PYTHONUNBUFFERED: 1
       DISPLAY: unix$DISPLAY
       XDG_RUNTIME_DIR: $XDG_RUNTIME_DIR
-
+      SIM: "true"
+      DOCKER_RUN: "true"

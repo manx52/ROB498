@@ -1,6 +1,6 @@
 <launch>
-    <arg name="simulation" default="true" />
-
+    <arg name="simulation" default="$(optenv SIM true)" />
+    <arg name="docker" default="$(optenv DOCKER_RUN false)"/>
 
     <node pkg="drone" type="main.py" name="drone" required="true" output="screen">
     </node>
@@ -9,9 +9,11 @@
 
     </include>
 
-    <include file="$(find drone)/launch/mavros_posix_sitl.launch" if="$(arg simulation)">
+    <group unless="$(arg docker)">
+        <include file="$(find drone)/launch/mavros_posix_sitl.launch" if="$(arg simulation)">
 
-	</include>
+        </include>
+    </group>
 <!--    <include file="$(find px4_realsense_bridge)/launch/bridge_mavros_sitl.launch" if="$(arg simulation)">-->
 
 <!--	</include>-->

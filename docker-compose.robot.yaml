@@ -44,3 +44,5 @@ services:
       /bin/bash -c
     environment:
       PYTHONUNBUFFERED: 1
+      SIM: "false"
+      DOCKER_RUN: "true"
