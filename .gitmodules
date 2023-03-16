@@ -1,0 +1,7 @@
+[submodule "external/VIO"]
+	path = external/VIO
+	url = git@github.com:dbaldwin/VIO.git
+[submodule "external/mav_comm"]
+	path = external/mav_comm
+	url = git@github.com:PX4/mav_comm.git
+

@@ -1,0 +1,7 @@
+node_name: "rob498_drone_07"
+offset: 0.05
+land_offset: -0.3
+launch_height: 1.5
+vicon_enabled: false
+rate: 20
+vis: true

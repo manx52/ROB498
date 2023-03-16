@@ -114,7 +114,7 @@ WORKDIR /home/$USER/catkin_ws
 # Build Python ROS Packages
 COPY --from=dependencies --chown=$USER /root/src src/ROB498
 RUN source /opt/ros/noetic/setup.bash && catkin config --cmake-args -DCMAKE_BUILD_TYPE=Debug
-RUN source /opt/ros/noetic/setup.bash && catkin build --no-status ROB498
+RUN source /opt/ros/noetic/setup.bash && catkin build --no-status drone
 RUN echo "source /home/$USER/catkin_ws/devel/setup.bash" >> ~/.bashrc
 
 # Necessary for using CUDA

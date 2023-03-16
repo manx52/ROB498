@@ -6,4 +6,3 @@ Dockerfile
 docker-compose.*
 LICENSE
 venv/
-external

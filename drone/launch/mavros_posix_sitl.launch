@@ -3,6 +3,7 @@
     <!-- MAVROS posix SITL environment launch script -->
     <!-- launches MAVROS, PX4 SITL, Gazebo environment, and spawns vehicle -->
     <!-- vehicle pose -->
+    <arg name="challenge4" default="$(optenv CHALLENGE4 true)"/>
     <arg name="x" default="0"/>
     <arg name="y" default="0"/>
     <arg name="z" default="0"/>
@@ -11,9 +12,11 @@
     <arg name="Y" default="0"/>
     <!-- vehicle model and world -->
     <arg name="est" default="ekf2"/>
-    <arg name="vehicle" default="iris_vision"/>
-    <arg name="world" default="$(find mavlink_sitl_gazebo)/worlds/empty.world"/>
-    <arg name="sdf" default="$(find mavlink_sitl_gazebo)/models/$(arg vehicle)/$(arg vehicle).sdf"/>
+    <arg name="vehicle" default="iris"/>
+    <arg name="my_model_name" default="iris_fpv_cam"/>
+    <arg name="world" default="$(find mavlink_sitl_gazebo)/worlds/empty.world" unless="$(arg challenge4)"/>
+    <arg name="world" default="$(find drone)/world/Challenge_4/Challenge_4.world" if ="$(arg challenge4)"/>
+    <arg name="sdf" default="$(find mavlink_sitl_gazebo)/models/$(arg my_model_name)/$(arg my_model_name).sdf"/>
 
     <!-- gazebo configs -->
     <arg name="gui" default="true"/>
@@ -49,6 +52,7 @@
         <!-- GCS link is provided by SITL -->
         <arg name="gcs_url" value=""/>
         <arg name="fcu_url" value="$(arg fcu_url)"/>
+
         <arg name="respawn_mavros" value="$(arg respawn_mavros)"/>
     </include>
 <!--    <include file="$(find drone)/launch/bridge.launch" >-->

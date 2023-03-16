@@ -23,17 +23,18 @@ x-rob498: &rob498 #  <<: *gpu
       - BUILDKIT_INLINE_CACHE=1
       - USER=${USER}
     cache_from:
-      - utrarobosoccer/rob498
-      - utrarobosoccer/soccerbot_dependencies
+      - utrarobosoccer/rob498:team_7
   cap_add:
     - SYS_PTRACE
     - SYS_NICE
   pid: "host"
   security_opt:
     - seccomp:unconfined
-  # Command that runs when docker-compose pull is executed
+  stdin_open: true
+  tty: true
+  # Command that runs when docker-compose up is executed
   command:
-    /bin/bash -c "export ROS_MASTER_URI=http://$$(hostname -i):11311 && export ROS_IP=$$(hostname -i)
+    /bin/bash -c "source ~/catkin_ws/devel/setup.bash  && roslaunch drone drone.launch || sleep infinity"
   volumes:
     - .:/home/$USER/catkin_ws/src/ROB498
     - .:/home/drone/catkin_ws/src/ROB498
@@ -45,10 +46,16 @@ x-rob498: &rob498 #  <<: *gpu
 services:
   drone:
     <<: *rob498
+    network_mode: host
+    command:
+     /bin/bash -c "source ~/catkin_ws/devel/setup.bash  && roslaunch drone drone.launch || sleep infinity"
     # Environmental variables passed into docker
     environment:
       PYTHONUNBUFFERED: 1
       DISPLAY: unix$DISPLAY
       XDG_RUNTIME_DIR: $XDG_RUNTIME_DIR
+      SIM: "true"
+      CHALLENGE4: "true"
+      DOCKER_RUN: "true"
 
 

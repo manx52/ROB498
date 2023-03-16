@@ -1,23 +1,25 @@
 <launch>
-    <arg name="simulation" default="false" />
+    <arg name="simulation" default="$(optenv SIM false)" />
+    <arg name="docker" default="$(optenv DOCKER_RUN false)"/>
+    <arg name="challenge4" default="$(optenv CHALLENGE4 true)"/>
+
     <param name="simulation" type="bool" value="$(arg simulation)" />
+    <param name="challenge4" type="bool" value="$(arg challenge4)" />
+
+    <env name="ROSCONSOLE_FORMAT" value="[${severity}] [${time: %r}] [${node} ${function} ${line}]: ${message}" />
+    <env name="ROSCONSOLE_CONFIG_FILE" value="$(find drone)/config/rosconsole.conf" />
+
+    <rosparam command="load" file="$(find drone)/config/config.yaml" />
 
     <!-- Our node to control the drone -->
-    <node pkg="drone" type="drone_comm.py" name="drone" required="true" output="screen">
+    <node pkg="drone" type="main.py" name="rob498_drone_07" required="true" output="screen" >
     </node>
 
-    <!-- Simulation vio -->
-<!--	<node pkg="drone" type="sim_odom" name="sim_odom" output="screen" if="$(arg simulation)" />-->
+    <!-- Real Drone-->
+    <include file="$(find drone)/launch/bridge_mavros.launch" unless="$(arg simulation)">
 
-<!--    <include file="$(find drone)/launch/bridge_mavros.launch" unless="$(arg simulation)">-->
+    </include>
 
-<!--    </include>-->
 
-<!--    <include file="$(find drone)/launch/mavros_posix_sitl.launch" if="$(arg simulation)">-->
-
-<!--	</include>-->
-<!--    <include file="$(find px4_realsense_bridge)/launch/bridge_mavros_sitl.launch" if="$(arg simulation)">-->
-
-<!--	</include>-->
 
 </launch>
