@@ -5,9 +5,11 @@ from geometry_msgs.msg import Twist, Pose, PoseStamped, PoseArray, TransformStam
 from mavros_msgs.msg import State
 from mavros_msgs.srv import CommandBool, CommandBoolRequest, SetMode, SetModeRequest
 from std_srvs.srv import Empty, EmptyResponse
-from nav_msgs.msg import Odometry
+from nav_msgs.msg import Odometry, Path
 from std_msgs.msg import Int8
 import numpy as np
+from visualization_msgs.msg import Marker
+from visualization_msgs.msg import MarkerArray
 
 
 class DroneComm:
@@ -19,6 +21,7 @@ class DroneComm:
         self.offset = rospy.get_param("/offset")
         self.land_offset = rospy.get_param("/land_offset")
         self.launch_height = rospy.get_param("/launch_height")
+        self.vis = rospy.get_param("/vis")
 
         # Simulation
         self.sim = rospy.get_param("/simulation")
@@ -39,18 +42,18 @@ class DroneComm:
 
         # Var
         self.drone_pose = PoseStamped()
-
+        self.path = Path()
         self.WAYPOINTS_RECEIVED = False
         self.waypoint_goal = PoseStamped()
         self.waypoint_goal.header.stamp = rospy.Time.now()
-        # self.waypoint_goal.header.frame_id = "world"  # TODO
+        self.waypoint_goal.header.frame_id = "map"
 
         self.waypoint_goal.pose.position.x = 0
         self.waypoint_goal.pose.position.y = 0
         self.waypoint_goal.pose.position.z = self.land_offset
 
         self.waypoints = PoseArray()
-        # self.waypoints.header.frame_id = "world"  # TODO
+        self.waypoints.header.frame_id = "map"
         self.waypoint_index = 0
 
         self.current_state = State()
@@ -80,9 +83,21 @@ class DroneComm:
         self.setpoint_vel_pub = rospy.Publisher("mavros/setpoint_velocity/cmd_vel_unstamped", Twist, queue_size=10)
         self.vicon_pose_pub = rospy.Publisher("mavros/vision_pose/pose", PoseStamped, queue_size=10)
 
+        if self.vis:
+            self.vis_goal_pub = rospy.Publisher(node_name + '/comm/vis_goal', Marker, queue_size=1)
+            self.vis_waypoints_pub = rospy.Publisher(node_name + '/comm/vis_waypoints', MarkerArray, queue_size=1)
+            self.vis_path_pub = rospy.Publisher(node_name + '/comm/vis_path', Path, queue_size=1)
+
     # Callback Sensors
     def pose_callback(self, msg):
         self.drone_pose = msg
+
+        # Visualization
+        if self.vis:
+            self.path.header.stamp = rospy.Time.now()
+            self.path.header.frame_id = "map"
+            self.path.poses.append(self.drone_pose)
+            self.vis_path_pub.publish(self.path)
 
     def state_callback(self, msg):
         self.current_state = msg
@@ -211,6 +226,16 @@ class DroneComm:
         self.waypoints.header.stamp = rospy.Time.now()
         self.waypoints.poses = msg.poses
 
+        # Visualization
+        if self.vis:
+            markerArray = MarkerArray()
+            for i, pt in enumerate(self.waypoints.poses):
+                marker = self.vis_marker(pt, 1, 0, 0, 0)
+                markerArray.markers.append(marker)
+                markerArray.markers[i].id = i
+
+            self.vis_waypoints_pub.publish(markerArray)
+
     # Util
     def positon_diff(self, pose):
         x_diff = pose.pose.position.x - self.drone_pose.pose.position.x
@@ -238,6 +263,25 @@ class DroneComm:
         vel.linear.z = z_clip
 
         return vel
+
+    def vis_marker(self, pose, r, g, b, action):
+        marker = Marker()
+        marker.header.frame_id = "map"
+        marker.header.stamp = rospy.Time.now()
+        marker.type = marker.SPHERE
+        marker.action = action
+        marker.scale.x = 0.125
+        marker.scale.y = 0.125
+        marker.scale.z = 0.125
+        marker.color.a = 1.0
+        marker.color.r = r
+        marker.color.g = g
+        marker.color.b = b
+        marker.pose.orientation.w = 1.0
+        marker.pose.position.x = pose.position.x
+        marker.pose.position.y = pose.position.y
+        marker.pose.position.z = pose.position.z
+        return marker
 
     # Main communication node for ground control
     def run(self):
@@ -278,17 +322,31 @@ class DroneComm:
                             rospy.loginfo("Vehicle armed")
 
                         last_req = rospy.Time.now()
+            pose = PoseStamped()
+            pose.header.frame_id = "map"
+            markerArray = MarkerArray()
             # Update waypoint
             if self.bool_test and self.WAYPOINTS_RECEIVED:
                 # Are we there yet?
-                pose = PoseStamped()
-                pose.header.stamp = rospy.Time.now()
                 pose.pose = self.waypoints.poses[self.waypoint_index]
                 error_pose = self.waypoint_error(pose)
 
+                # Visualization
+                if self.vis:
+                    for i, pt in enumerate(self.waypoints.poses):
+                        if i <= self.waypoint_index:
+                            marker = self.vis_marker(pt, 1, 0, 0, 2)
+                            markerArray.markers.append(marker)
+                            markerArray.markers[i].id = i
+                        else:
+                            marker = self.vis_marker(pt, 1, 0, 0, 0)
+                            markerArray.markers.append(marker)
+                            markerArray.markers[i].id = i
+
+                    self.vis_waypoints_pub.publish(markerArray)
+
                 if error_pose < 0.1 and self.waypoint_index < (len(self.waypoints.poses) - 1):  # TODO tune
                     self.waypoint_index += 1
-                    pose.header.stamp = rospy.Time.now()
                     pose.pose = self.waypoints.poses[self.waypoint_index]
 
 
@@ -296,10 +354,16 @@ class DroneComm:
                 pose = self.waypoint_goal
                 error_pose = self.waypoint_error(pose)
 
+            pose.header.stamp = rospy.Time.now()
             msg = "Waypoint {index:} error: {error:}"
             rospy.loginfo_throttle(1, msg.format(index=self.waypoint_index, error=error_pose))
 
             # Send goal waypoint
             self.local_pos_pub.publish(pose)
 
-            self.r.sleep()
+            # Visualization
+            if self.vis:
+                marker = self.vis_marker(pose.pose, 0, 1, 0, 0)
+                self.vis_goal_pub.publish(marker)
+
+        self.r.sleep()

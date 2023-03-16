@@ -1,22 +1,49 @@
 <launch>
-    <arg name="simulation" default="$(optenv sim true)" />
-    <arg name="challenge4" default="$(optenv challenge4 true)"/>
+    <arg name="simulation" default="$(optenv SIM true)" />
+    <arg name="challenge4" default="$(optenv CHALLENGE4 true)"/>
+    <arg name="docker" default="$(optenv DOCKER_RUN false)"/>
+
     <param name="simulation" type="bool" value="$(arg simulation)" />
     <param name="challenge4" type="bool" value="$(arg challenge4)" />
 
     <env name="ROSCONSOLE_FORMAT" value="[${severity}] [${time: %r}] [${node} ${function} ${line}]: ${message}" />
-    <env name="ROSCONSOLE_CONFIG_FILE" value="$(find soccerbot)/config/rosconsole.conf" />
+    <env name="ROSCONSOLE_CONFIG_FILE" value="$(find drone)/config/rosconsole.conf" />
+
+<!--    <param name="robot_description" command="xacro '$(find rotors_description)/urdf/iris.xacro'-->
+<!--        namespace:='drone'-->
+<!--        file_path:=package://rotors_description-->
+
+<!--        "-->
+<!--    />-->
+<!--    <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />-->
+<!--    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher"/>-->
+<!--      &lt;!&ndash; Launch static transform publishers &ndash;&gt;-->
+
+<!--    <node pkg="tf" type="static_transform_publisher" name="tf_base_link"-->
+<!--        args="0 0 0 0 0 0 1 base_link_frd drone/base_link 1000"/>-->
+<!--    <node pkg="tf" type="static_transform_publisher" name="tf_map"-->
+<!--        args="0 0 0 0 0 0 1 map_ned odom  1000"/>-->
+<!--    <node pkg="tf" type="static_transform_publisher" name="tf_odom"-->
+<!--        args="0 0 0 0 0 0 1 odom_ned base_link  1000"/>-->
 
     <rosparam command="load" file="$(find drone)/config/config.yaml" />
 
+
     <!-- Our node to control the drone -->
-    <node pkg="drone" type="main.py" name="rob498_drone_07" required="true" output="screen">
+    <node pkg="drone" type="main.py" name="rob498_drone_07" required="true" output="screen" >
     </node>
 
-    <include file="$(find drone)/launch/mavros_posix_sitl.launch" if="$(arg simulation)">
-        <arg name="challenge4" value="$(arg challenge4)" />
-	</include>
+    <group unless="$(arg docker)">
 
+        <include file="$(find drone)/launch/gui.launch" />
+
+        <include file="$(find drone)/launch/mavros_posix_sitl.launch" if="$(arg simulation)" >
+            <arg name="challenge4" value="$(arg challenge4)" />
+        </include>
+
+    </group>
+
+    <!-- Real Drone-->
     <include file="$(find drone)/launch/bridge_mavros.launch" unless="$(arg simulation)">
 
     </include>

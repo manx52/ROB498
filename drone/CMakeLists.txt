@@ -28,6 +28,7 @@ find_package(
       mavlink
       gazebo_ros
       gazebo_msgs
+      rotors_description
 
 )
 find_package(gazebo REQUIRED)

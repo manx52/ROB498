@@ -3,7 +3,7 @@
     <!-- MAVROS posix SITL environment launch script -->
     <!-- launches MAVROS, PX4 SITL, Gazebo environment, and spawns vehicle -->
     <!-- vehicle pose -->
-    <arg name="challenge4" default="false"/>
+    <arg name="challenge4" default="$(optenv CHALLENGE4 true)"/>
     <arg name="x" default="0"/>
     <arg name="y" default="0"/>
     <arg name="z" default="0"/>
@@ -52,6 +52,7 @@
         <!-- GCS link is provided by SITL -->
         <arg name="gcs_url" value=""/>
         <arg name="fcu_url" value="$(arg fcu_url)"/>
+
         <arg name="respawn_mavros" value="$(arg respawn_mavros)"/>
     </include>
 <!--    <include file="$(find drone)/launch/bridge.launch" >-->

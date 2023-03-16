@@ -1,0 +1,4 @@
+[submodule "external/VIO"]
+	path = external/VIO
+	url = git@github.com:dbaldwin/VIO.git
+
