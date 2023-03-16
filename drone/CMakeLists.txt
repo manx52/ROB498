@@ -29,6 +29,7 @@ find_package(
       gazebo_ros
       gazebo_msgs
       rotors_description
+      px4_realsense_bridge
 
 )
 find_package(gazebo REQUIRED)
@@ -45,6 +46,7 @@ catkin_package(DEPENDS
       gazebo_ros
       gazebo_msgs
     CATKIN_DEPENDS
+    roscpp rospy std_msgs mavros_msgs geometry_msgs mav_msgs sensor_msgs  tf
     INCLUDE_DIRS
     LIBRARIES)
 catkin_python_setup()

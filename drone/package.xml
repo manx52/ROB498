@@ -23,6 +23,7 @@
   <depend>mavros_extras</depend>
   <depend>mavros_msgs</depend>
   <depend>rotors_description</depend>
+  <depend>px4_realsense_bridge</depend>
 <!--  <depend>gazebo_ros</depend>-->
 <!--  <depend>gazebo_msgs</depend>-->
   <build_depend>gazebo_ros</build_depend>

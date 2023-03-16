@@ -53,6 +53,7 @@ echo "xhost +local:docker" >> ~/.bashrc && source ~/.bashrc
 - docker-compose.robot.yaml  is for a docker container that runs on a Jetson Nano. Building from scratch will take more then an hour.
 ```bash
 roslaunch drone mavros_posix_sitl.launch # run simulation
+roslaunch drone gui.launch # For visualization
 
 docker-compose -f docker-compose.yaml pull # Use docker-compose build if you want to build locally
 docker-compose -f docker-compose.yaml up

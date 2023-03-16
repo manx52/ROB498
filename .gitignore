@@ -12,4 +12,3 @@ slave.py
 venv/
 /docs/_build/
 /docs/generated/
-/external
