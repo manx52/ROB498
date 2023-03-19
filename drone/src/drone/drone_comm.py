@@ -10,7 +10,7 @@ from std_msgs.msg import Int8
 import numpy as np
 from visualization_msgs.msg import Marker
 from visualization_msgs.msg import MarkerArray
-
+import tf
 
 class DroneComm:
     def __init__(self):
@@ -83,6 +83,7 @@ class DroneComm:
         self.setpoint_vel_pub = rospy.Publisher("mavros/setpoint_velocity/cmd_vel_unstamped", Twist, queue_size=10)
         self.vicon_pose_pub = rospy.Publisher("mavros/vision_pose/pose", PoseStamped, queue_size=10)
 
+        self.br = tf.TransformBroadcaster()
         if self.vis:
             self.vis_goal_pub = rospy.Publisher(node_name + '/comm/vis_goal', Marker, queue_size=1)
             self.vis_waypoints_pub = rospy.Publisher(node_name + '/comm/vis_waypoints', MarkerArray, queue_size=1)
@@ -92,6 +93,13 @@ class DroneComm:
     def pose_callback(self, msg):
         self.drone_pose = msg
 
+        self.br.sendTransform(
+            [self.drone_pose.pose.position.x, self.drone_pose.pose.position.y , self.drone_pose.pose.position.z],
+            [self.drone_pose.pose.orientation.x,self.drone_pose.pose.orientation.y,self.drone_pose.pose.orientation.z,self.drone_pose.pose.orientation.w,],
+            msg.header.stamp,
+            "drone/base_link",
+            "odom",
+        )
         # Visualization
         if self.vis:
             self.path.header.stamp = rospy.Time.now()
@@ -163,7 +171,7 @@ class DroneComm:
         self.bool_abort = False
 
         self.waypoint_goal.header.stamp = rospy.Time.now()
-        self.waypoint_goal.pose.position.x = 0
+        self.waypoint_goal.pose.position.x = 1
         self.waypoint_goal.pose.position.y = 0
         self.waypoint_goal.pose.position.z = self.launch_height - self.offset
 

@@ -24,6 +24,8 @@
   <depend>mavros_msgs</depend>
   <depend>rotors_description</depend>
   <depend>px4_realsense_bridge</depend>
+  <depend>drone_msgs</depend>
+  <depend>drone_perception</depend>
 <!--  <depend>gazebo_ros</depend>-->
 <!--  <depend>gazebo_msgs</depend>-->
   <build_depend>gazebo_ros</build_depend>

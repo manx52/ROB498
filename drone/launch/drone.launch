@@ -9,14 +9,14 @@
     <env name="ROSCONSOLE_FORMAT" value="[${severity}] [${time: %r}] [${node} ${function} ${line}]: ${message}" />
     <env name="ROSCONSOLE_CONFIG_FILE" value="$(find drone)/config/rosconsole.conf" />
 
-<!--    <param name="robot_description" command="xacro '$(find rotors_description)/urdf/iris.xacro'-->
-<!--        namespace:='drone'-->
-<!--        file_path:=package://rotors_description-->
+    <param name="robot_description" command="xacro '$(find rotors_description)/urdf/iris.xacro'
+        namespace:='drone'
+        file_path:=package://rotors_description
 
-<!--        "-->
-<!--    />-->
-<!--    <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />-->
-<!--    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher"/>-->
+        "
+    />
+    <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher"/>
 <!--      &lt;!&ndash; Launch static transform publishers &ndash;&gt;-->
 
 <!--    <node pkg="tf" type="static_transform_publisher" name="tf_base_link"-->
@@ -28,8 +28,12 @@
 
     <rosparam command="load" file="$(find drone)/config/config.yaml" />
 
+    <!-- Obstacle Detection -->
+    <node pkg="drone_perception" type="detector_obstacles.py" name="detector_obstacles" output="screen">
+        <rosparam file="$(find drone_perception)/config/config.yaml" command="load" />
+    </node>
 
-    <!-- Our node to control the drone -->
+    <!-- Drone Control -->
     <node pkg="drone" type="main.py" name="rob498_drone_07" required="true" output="screen" >
     </node>
 
@@ -37,9 +41,9 @@
 
         <include file="$(find drone)/launch/gui.launch" />
 
-        <include file="$(find drone)/launch/mavros_posix_sitl.launch" if="$(arg simulation)" >
-            <arg name="challenge4" value="$(arg challenge4)" />
-        </include>
+<!--        <include file="$(find drone)/launch/mavros_posix_sitl.launch" if="$(arg simulation)" >-->
+<!--            <arg name="challenge4" value="$(arg challenge4)" />-->
+<!--        </include>-->
 
     </group>
 
