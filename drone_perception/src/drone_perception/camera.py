@@ -70,17 +70,9 @@ class Camera:
             e[1] = 0
             e[2] = 0
             world_to_base_link.orientation_euler = e
-            # self.pose_base_link_straight = world_to_base_link
-
-            # # Calculate the camera transformation
-            # self.tf_listener.waitForTransform("odom", camera_frame, timestamp, rospy.Duration(secs=1))
-            # (trans, rot) = self.tf_listener.lookupTransform("odom", camera_frame, timestamp)
-            # world_to_camera = Transformation(trans, rot)
-            #
-            # camera_to_base_link = scipy.linalg.inv(world_to_base_link) @ world_to_camera
 
             self.pose = world_to_base_link
-            print(self.pose.position)
+
             return
         except (
                 tf2_py.LookupException,
@@ -139,7 +131,7 @@ class Camera:
         x_delta = (pixel_world_pose.position[0] - camera_pose.position[0]) / ratio
         y_delta = (pixel_world_pose.position[1] - camera_pose.position[1]) / ratio
 
-        pts = [x_delta + camera_pose.position[0] - 2*temp, y_delta + camera_pose.position[1], temp]
+        pts = [x_delta + camera_pose.position[0] - 2 * temp, y_delta + camera_pose.position[1], temp]
         # print(pts)
         return pts
 
