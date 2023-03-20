@@ -30,6 +30,7 @@ class DetectorObstacles(Detector):
             buff_size=DEFAULT_BUFF_SIZE * 64
         )  # Large buff size (https://answers.ros.org/question/220502/image-subscriber-lag-despite-queue-1/)
 
+        self.bounding_box_publisher = rospy.Publisher("camera/bounding_box", Image, queue_size=1)
         self.green_mask_publisher = rospy.Publisher("camera/green_mask", Image, queue_size=1)
         self.red_mask_publisher = rospy.Publisher("camera/red_mask", Image, queue_size=1)
         self.green_mask_point_cloud_publisher = rospy.Publisher("green_mask_point_cloud", PointCloud2, queue_size=1)
@@ -37,7 +38,7 @@ class DetectorObstacles(Detector):
         self.tf_broadcaster = TransformBroadcaster()
 
         # TODO tune
-        self.point_cloud_max_distance = rospy.get_param("point_cloud_max_distance", 5)
+        self.point_cloud_max_distance = rospy.get_param("point_cloud_max_distance", 15)
         self.point_cloud_spacing = rospy.get_param("point_cloud_spacing", 30)
         self.publish_point_cloud = True
 
@@ -75,15 +76,37 @@ class DetectorObstacles(Detector):
         green_only = cv2.inRange(hsv, (35, 85, 0), (115, 255, 255))
         red_only = cv2.inRange(hsv, (100, 70, 50), (180, 255, 255))
 
-        self.point_cloud_processing(img.header, green_only, self.green_mask_publisher, self.green_mask_point_cloud_publisher)
-        self.point_cloud_processing(img.header, red_only, self.red_mask_publisher, self.red_mask_point_cloud_publisher)
+        self.point_cloud_processing(image, img.header, green_only, self.green_mask_publisher,
+                                    self.green_mask_point_cloud_publisher)
+        self.point_cloud_processing(image, img.header, red_only, self.red_mask_publisher,
+                                    self.red_mask_point_cloud_publisher)
+
+        if self.bounding_box_publisher.get_num_connections() > 0:
+            img_out = CvBridge().cv2_to_imgmsg(image)
+            img_out.header = img.header
+            self.bounding_box_publisher.publish(img_out)
 
         t_end = time.time()
         rospy.loginfo_throttle(60, "Obstacle detection rate: " + str(t_end - t_start))
 
-    def point_cloud_processing(self, img_header, img, image_publisher, point_cloud_publisher):
-        # No line detection simply publish all white points
-        pts_x, pts_y = np.where(img == 255)
+    def point_cloud_processing(self, image, img_header, img, image_publisher, point_cloud_publisher):
+        # Find bounding box
+        cnts, hierarchy = cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        box = []
+        for i, region in enumerate(cnts):
+            x, y, w, h = cv2.boundingRect(region)
+            boundingBoxes = [[x, y + h], [x + w, y]]
+            # msg = "boundingBoxes {index:} "
+            # rospy.loginfo_throttle(1, msg.format(
+            #     index=boundingBoxes))
+            # # print(self.camera.calculateBallFromBoundingBoxes(0.3,boundingBoxes).position)
+            # msg = "Obstacle Position {index:} "
+            # rospy.loginfo_throttle(1, msg.format(
+            #     index=self.camera.calculateBallFromBoundingBoxes(0.3, boundingBoxes).position))
+            # area = cv2.contourArea(cnts[i])
+            # cv2.drawContours(image, cnts, i, (255, 0, 0), 3)
+            cv2.rectangle(image, (x, y), (x + w, y + h), (0, 0, 255), 2)
+            box.append(self.camera.calculateBallFromBoundingBoxes(0.3, boundingBoxes))
 
         if image_publisher.get_num_connections() > 0:
             img_out = CvBridge().cv2_to_imgmsg(img)
@@ -93,15 +116,11 @@ class DetectorObstacles(Detector):
         if self.publish_point_cloud and point_cloud_publisher.get_num_connections() > 0:
             points3d = []
 
-            i = 0
-            for px, py in zip(pts_y, pts_x):
-                i = i + 1
-                if i % self.point_cloud_spacing == 0:
-                    camToPoint = Transformation(self.camera.findFloorCoordinate([px, py]))
+            for pt in box:
 
-                    # Exclude points too far away
-                    if camToPoint.norm_squared < self.point_cloud_max_distance ** 2:  # TODO remove lines behind
-                        points3d.append(camToPoint.position)
+                # Exclude points too far away
+                if pt.norm_squared < self.point_cloud_max_distance ** 2:  # TODO remove lines behind
+                    points3d.append(pt.position)
 
             # Publish fieldlines in laserscan format
             header = Header()

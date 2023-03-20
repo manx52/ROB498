@@ -22,7 +22,7 @@ class Camera:
 
     """
 
-    def __init__(self, HORIZONTAL_FOV=1.047, focal_length=2.77191356):
+    def __init__(self, HORIZONTAL_FOV=1.047, focal_length=2.77191356,resolution_y=240, resolution_x=320):
         """
         Initializes the camera object
 
@@ -32,6 +32,8 @@ class Camera:
         self.pose = Transformation()  #: Pose of the camera
 
         self.camera_info = CameraInfo()  #: Camera info object recieved from the subscriber
+        self.resolution_y = resolution_y
+        self.resolution_x = resolution_x
         self.horizontalFOV = HORIZONTAL_FOV
         self.focal_length = focal_length  #: Focal length of the camera (meters) distance to the camera plane as projected in 3D
         self.pose_base_link_straight = Transformation()
@@ -92,24 +94,8 @@ class Camera:
         """
         self.camera_info = camera_info
         self.focal_length = self.camera_info.K[0]
-
-    @cached_property
-    def resolution_x(self) -> int:
-        """
-        The X resolution of the camera or the width of the screen in pixels
-
-        :return: width in pixels
-        """
-        return self.camera_info.width
-
-    @cached_property
-    def resolution_y(self):
-        """
-        The Y resolution of the camera or the height of the screen in pixels
-
-        :return: height in pixels
-        """
-        return self.camera_info.height
+        self.resolution_y = self.camera_info.height
+        self.resolution_x = self.camera_info.width
 
     def findFloorCoordinate(self, pos: [int]) -> [int]:
         """
@@ -135,46 +121,6 @@ class Camera:
         # print(pts)
         return pts
 
-        # x = (pos[0] - 320.5) / 277.191356
-        # y = (pos[1] - 240.5) / 277.191356
-        #
-        # norm = math.sqrt(x * x + y * y + 1)
-        # x = (x)/norm
-        # y =  (y)/norm
-        # z = 1.0 / norm
-        # pts = [x + self.pose.position[0], y + self.pose.position[1], z + self.pose.position[2]]
-        # print(pts)
-        # return pts
-
-    def findCameraCoordinate(self, pos: [int]) -> [int]:
-        """
-        From a 3d position on the field, get the camera coordinate, opposite of :func:`~drone_perception.Camera.findFloorCoordinate`
-
-        :param pos: The 3D coordinate of the object
-        :return: The 2D pixel (x, y) on the camera, if the object was projected on the camera
-        """
-        pos3d = Transformation(pos)
-        camera_pose = self.pose
-        pos3d_tr = np.linalg.inv(camera_pose) @ pos3d
-
-        return self.findCameraCoordinateFixedCamera(pos3d_tr.position)
-
-    def findCameraCoordinateFixedCamera(self, pos: [int]) -> [int]:
-        """
-        Helper function for :func:`~drone_perception.Camera.findCameraCoordinate`, finds the camera coordinate if the camera were fixed at the origin
-
-        :param pos: The 3D coordinate of the object
-        :return: The 2D pixel (x, y) on the camera, if the object was projected on the camera and the camera is placed at the origin
-        """
-
-        pos = Transformation(pos)
-
-        ratio = self.focal_length / pos.position[0]
-
-        tx = pos.position[1] * ratio
-        ty = pos.position[2] * ratio
-        x, y = self.worldToImageFrame(tx, ty)
-        return [x, y]
 
     @cached_property
     def verticalFOV(self):
@@ -242,57 +188,6 @@ class Camera:
             (self.resolution_y / 2.0 + pos_y / self.pixelHeight) - 0.5,
         )
 
-    def calculateBoundingBoxesFromBall(self, ball_position: Transformation, ball_radius: float = 0.3):
-        """
-        Takes a 3D ball transformation and returns the bounding boxes of the ball if seen on camera
-
-        :param ball_position: 3D coordinates of the ball stored in the :class:`Transformation` format
-        :param ball_radius: The radious of the ball in centimeters
-        :return: The bounding boxes of the ball on the camera in the format [[x1,y1], [x1,y1]] which are the top left
-        and bottom right of the bounding box respectively
-        """
-
-        camera_pose = self.pose
-        pos3d_tr = np.linalg.inv(camera_pose) @ ball_position
-
-        x = pos3d_tr.position[0]
-        y = -pos3d_tr.position[1]
-        z = -pos3d_tr.position[2]
-        r = ball_radius
-
-        thetay = math.atan2(y, x)
-        dy = math.sqrt(x ** 2 + y ** 2)
-        phiy = math.asin(r / dy)
-
-        xyfar = [x - math.sin(thetay + phiy) * r, y + math.cos(thetay + phiy) * r]
-        xynear = [x + math.sin(thetay - phiy) * r, y - math.cos(thetay - phiy) * r]
-
-        thetaz = math.atan2(z, x)
-        dz = math.sqrt(x ** 2 + z ** 2)
-        phiz = math.asin(r / dz)
-
-        xzfar = [x - math.sin(thetaz + phiz) * r, z + math.cos(thetaz + phiz) * r]
-        xznear = [x + math.sin(thetaz - phiz) * r, z - math.cos(thetaz - phiz) * r]
-
-        ball_right_point = [xyfar[0], xyfar[1], z]
-        ball_left_point = [xynear[0], xynear[1], z]
-        ball_bottom_point = [xzfar[0], y, xzfar[1]]
-        ball_top_point = [xznear[0], y, xznear[1]]
-
-        ball_left_point_cam = self.findCameraCoordinateFixedCamera(ball_left_point)
-        ball_right_point_cam = self.findCameraCoordinateFixedCamera(ball_right_point)
-        ball_top_point_cam = self.findCameraCoordinateFixedCamera(ball_top_point)
-        ball_bottom_point_cam = self.findCameraCoordinateFixedCamera(ball_bottom_point)
-
-        left_border_x = ball_left_point_cam[0]
-        right_border_x = ball_right_point_cam[0]
-        top_border_y = ball_top_point_cam[1]
-        bottom_border_y = ball_bottom_point_cam[1]
-
-        bounding_box = [[left_border_x, top_border_y], [right_border_x, bottom_border_y]]
-
-        return bounding_box
-
     def calculateBallFromBoundingBoxes(self, ball_radius: float = 0.3, bounding_boxes: [float] = []) -> Transformation:
         """
         Reverse function for  :func:`~drone_perception.Camera.calculateBoundingBoxesFromBall`, takes the bounding boxes
@@ -321,6 +216,7 @@ class Camera:
         y2 = ym + (width / 2)
         z2 = zm + (length / 2)
 
+        # Convert pixels to coordinates
         y1w, z1w = self.imageToWorldFrame(y1, z1)
         y2w, z2w = self.imageToWorldFrame(y2, z2)
         y1w = -y1w
