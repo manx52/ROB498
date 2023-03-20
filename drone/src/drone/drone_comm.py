@@ -10,7 +10,9 @@ from std_msgs.msg import Int8
 import numpy as np
 from visualization_msgs.msg import Marker
 from visualization_msgs.msg import MarkerArray
+from tf.transformations import quaternion_from_euler
 import tf
+
 
 class DroneComm:
     def __init__(self):
@@ -94,8 +96,9 @@ class DroneComm:
         self.drone_pose = msg
 
         self.br.sendTransform(
-            [self.drone_pose.pose.position.x, self.drone_pose.pose.position.y , self.drone_pose.pose.position.z],
-            [self.drone_pose.pose.orientation.x,self.drone_pose.pose.orientation.y,self.drone_pose.pose.orientation.z,self.drone_pose.pose.orientation.w,],
+            [self.drone_pose.pose.position.x, self.drone_pose.pose.position.y, self.drone_pose.pose.position.z],
+            [self.drone_pose.pose.orientation.x, self.drone_pose.pose.orientation.y, self.drone_pose.pose.orientation.z,
+             self.drone_pose.pose.orientation.w, ],
             msg.header.stamp,
             "drone/base_link",
             "odom",
@@ -139,29 +142,79 @@ class DroneComm:
             ]
         elif msg.data == 8:
             # 8 pt square
+
             pt1 = Point(1, 0, self.launch_height - self.offset)
-            pt2 = Point(1, 1, self.launch_height - self.offset)
-            pt3 = Point(1, 2, self.launch_height - self.offset)
-            pt4 = Point(0, 2, self.launch_height - self.offset)
-            pt5 = Point(-1, 2, self.launch_height - self.offset)
-            pt6 = Point(-1, 1, self.launch_height - self.offset)
-            pt7 = Point(-1, 0, self.launch_height - self.offset)
+            pt2 = Point(2, 0, self.launch_height - self.offset)
+            pt3 = Point(1.5, -3, self.launch_height - self.offset)
+            pt4 = Point(3, -5, self.launch_height - self.offset)
+            pt5 = Point(2, -6.5, self.launch_height - self.offset)
+            pt6 = Point(0, -5, self.launch_height - self.offset)
+            pt7 = Point(-1.8, -4, self.launch_height - self.offset)
             pt8 = Point(0, 0, self.launch_height - self.offset)
 
-            q1 = Quaternion(0, 0, 0, 1)
+            A = np.array((1, 0))
+            B = np.array((2, 0))
+            q1 = self.calc_quaternion(A,B)
+
+            B = np.array((1.5, -3))
+            A = np.array((2, 0))
+            q2 = self.calc_quaternion(A, B)
+
+            A = np.array((1.5, -3))
+            B = np.array((3, -5))
+            q3 = self.calc_quaternion(A, B)
+
+            B = np.array((2, -6.5))
+            A = np.array((3, -5))
+            q4 = self.calc_quaternion(A, B)
+
+            A = np.array((2, -6.5))
+            B = np.array((0, -5))
+            q5 = self.calc_quaternion(A, B)
+
+            B = np.array((-1.8, -4))
+            A = np.array((0, -5))
+            q6 = self.calc_quaternion(A, B)
+
+            A = np.array((-1.8, -4))
+            B = np.array((0, 0))
+            q7 = self.calc_quaternion(A, B)
+
             waypoints_test.poses = [
                 Pose(pt1, q1),
-                Pose(pt2, q1),
-                Pose(pt3, q1),
-                Pose(pt4, q1),
-                Pose(pt5, q1),
-                Pose(pt6, q1),
-                Pose(pt7, q1),
-                Pose(pt8, q1),
+                Pose(pt2, q2),
+                Pose(pt3, q3),
+                Pose(pt4, q4),
+                Pose(pt5, q5),
+                Pose(pt6, q6),
+                Pose(pt7, q7),
+                Pose(pt8, q7),
             ]
         self.callback_waypoints(waypoints_test)
 
     # Callback handlers
+    def calc_quaternion(self, A, B):
+        # a = np.cross(A, B)
+        # x = a[0]
+        # y = a[1]
+        # z = a[2]
+        # A_length = np.linalg.norm(A)
+        # B_length = np.linalg.norm(B)
+        # w = math.sqrt((A_length ** 2) * (B_length ** 2)) + np.dot(A, B)
+        #
+        # norm = math.sqrt(x ** 2 + y ** 2 + z ** 2 + w ** 2)
+        # if norm == 0:
+        #     norm = 1
+        #
+        # x /= norm
+        # y /= norm
+        # z /= norm
+        # w /= norm
+        temp = np.dot(A,B) / (np.linalg.norm(A) * np.linalg.norm(B))
+        theta = math.acos(temp)
+        q = quaternion_from_euler(0, 0, theta)
+
+        return Quaternion(q[0], q[1], q[2], q[3])
 
     def handle_launch(self):
         print('Launch Requested. Your drone should take off.')
@@ -171,7 +224,7 @@ class DroneComm:
         self.bool_abort = False
 
         self.waypoint_goal.header.stamp = rospy.Time.now()
-        self.waypoint_goal.pose.position.x = 1
+        self.waypoint_goal.pose.position.x = 0
         self.waypoint_goal.pose.position.y = 0
         self.waypoint_goal.pose.position.z = self.launch_height - self.offset
 
