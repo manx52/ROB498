@@ -95,14 +95,14 @@ class DroneComm:
     def pose_callback(self, msg):
         self.drone_pose = msg
 
-        self.br.sendTransform(
-            [self.drone_pose.pose.position.x, self.drone_pose.pose.position.y, self.drone_pose.pose.position.z],
-            [self.drone_pose.pose.orientation.x, self.drone_pose.pose.orientation.y, self.drone_pose.pose.orientation.z,
-             self.drone_pose.pose.orientation.w, ],
-            msg.header.stamp,
-            "drone/base_link",
-            "odom",
-        )
+        # self.br.sendTransform(
+        #     [self.drone_pose.pose.position.x, self.drone_pose.pose.position.y, self.drone_pose.pose.position.z],
+        #     [self.drone_pose.pose.orientation.x, self.drone_pose.pose.orientation.y, self.drone_pose.pose.orientation.z,
+        #      self.drone_pose.pose.orientation.w, ],
+        #     msg.header.stamp,
+        #     "drone/base_link",
+        #     "odom",
+        # )
         # Visualization
         if self.vis:
             self.path.header.stamp = rospy.Time.now()

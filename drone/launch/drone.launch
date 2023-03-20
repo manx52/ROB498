@@ -9,14 +9,14 @@
     <env name="ROSCONSOLE_FORMAT" value="[${severity}] [${time: %r}] [${node} ${function} ${line}]: ${message}" />
     <env name="ROSCONSOLE_CONFIG_FILE" value="$(find drone)/config/rosconsole.conf" />
 
-    <param name="robot_description" command="xacro '$(find rotors_description)/urdf/iris.xacro'
-        namespace:='drone'
-        file_path:=package://rotors_description
+<!--    <param name="robot_description" command="xacro '/home/drone/catkin_ws/src/ROB498/external/rotors_description/urdf/iris.xacro'-->
+<!--        namespace:='drone'-->
+<!--        file_path:=package://rotors_description-->
 
-        "
-    />
-    <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
-    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher"/>
+<!--        "-->
+<!--    />-->
+<!--    <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />-->
+<!--    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher"/>-->
 <!--      &lt;!&ndash; Launch static transform publishers &ndash;&gt;-->
 
 <!--    <node pkg="tf" type="static_transform_publisher" name="tf_base_link"-->

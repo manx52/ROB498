@@ -55,8 +55,6 @@ class DetectorObstacles(Detector):
         if not self.camera.ready():
             return
 
-        self.camera.reset_position(timestamp=img.header.stamp)
-
         # # Uncomment for ground truth
         rospy.loginfo_once("Started Publishing Obstacles")
 

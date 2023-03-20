@@ -22,7 +22,7 @@ class Camera:
 
     """
 
-    def __init__(self, HORIZONTAL_FOV=1.047, focal_length=2.77191356,resolution_y=240, resolution_x=320):
+    def __init__(self, HORIZONTAL_FOV=1.047, focal_length=2.77191356, resolution_y=240, resolution_x=320):
         """
         Initializes the camera object
 
@@ -42,6 +42,21 @@ class Camera:
                                                  CameraInfo,
                                                  self.cameraInfoCallback)
         self.tf_listener = TransformListener()
+        self.local_pos_sub = rospy.Subscriber('mavros/local_position/pose', PoseStamped, self.pose_callback)
+
+    def pose_callback(self, msg):
+        trans = [msg.pose.position.x, msg.pose.position.y, msg.pose.position.z]
+        rot = [msg.pose.orientation.x, msg.pose.orientation.y, msg.pose.orientation.z, msg.pose.orientation.w]
+
+        if trans[2] < 0.02:
+            trans[2] = 0.02
+        world_to_base_link = Transformation(trans, rot)
+        e = world_to_base_link.orientation_euler
+        e[1] = 0
+        e[2] = 0
+        world_to_base_link.orientation_euler = e
+
+        self.pose = world_to_base_link
 
     def ready(self) -> bool:
         """
@@ -50,41 +65,6 @@ class Camera:
         :return: True if the camera is ready, else False
         """
         return self.pose is not None and self.resolution_x is not None and self.resolution_y is not None and self.camera_info is not None
-
-    def reset_position(self, timestamp=rospy.Time(0), camera_frame="drone/camera"):
-        """
-        Resets the position of the camera, it uses a series of methods that fall back on each other to get the location of the camera
-
-        :param from_world_frame: If this is set to true, the camera position transformation will be from the world instead of the robot odom frame
-        :param timestamp: What time do we want the camera tf frame, rospy.Time(0) if get the latest transform
-        :param camera_frame: The name of the camera frame
-        :param skip_if_not_found: If set to true, then will not wait if it cannot find the camera transform after the specified duration (1 second), it will just return
-        """
-
-        try:
-            # Find the odom to base_footprint and publish straight base footprint
-            self.tf_listener.waitForTransform("odom", "drone/base_link", timestamp, rospy.Duration(secs=1))
-            (trans1, rot1) = self.tf_listener.lookupTransform("odom", "drone/base_link", timestamp)
-            if trans1[2] < 0.02:
-                trans1[2] = 0.02
-            world_to_base_link = Transformation(trans1, rot1)
-            e = world_to_base_link.orientation_euler
-            e[1] = 0
-            e[2] = 0
-            world_to_base_link.orientation_euler = e
-
-            self.pose = world_to_base_link
-
-            return
-        except (
-                tf2_py.LookupException,
-                tf.LookupException,
-                tf.ConnectivityException,
-                tf.ExtrapolationException,
-                tf2_py.TransformException,
-        ) as ex:
-            rospy.logerr_throttle(5, f"Unable to find transformation from world to {camera_frame}")
-            pass
 
     def cameraInfoCallback(self, camera_info: CameraInfo):
         """
@@ -120,7 +100,6 @@ class Camera:
         pts = [x_delta + camera_pose.position[0] - 2 * temp, y_delta + camera_pose.position[1], temp]
         # print(pts)
         return pts
-
 
     @cached_property
     def verticalFOV(self):

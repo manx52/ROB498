@@ -8,7 +8,6 @@ from drone_perception.camera import Camera
 class Detector:
     def __init__(self):
         self.camera = Camera()
-        self.camera.reset_position() # TODO needed?
 
         self.br = tf.TransformBroadcaster()
 
