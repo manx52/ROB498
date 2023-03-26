@@ -118,7 +118,7 @@ class DroneComm:
 
         q = msg.transform.rotation
         [roll, pitch, yaw] = Transformation.get_euler_from_quaternion([q.w, q.x, q.y, q.z])
-        vicon_quaternion = Transformation.get_quaternion_from_euler([0, 0, yaw])
+        vicon_quaternion = Transformation.get_quaternion_from_euler([0, 0, 1.5708])
         vicon_position = [msg.transform.translation.x, msg.transform.translation.y, msg.transform.translation.z]
         self.vicon_transform = Transformation(vicon_position, vicon_quaternion)
 
@@ -454,4 +454,4 @@ class DroneComm:
                 marker = self.vis_marker(pose.pose, 0, 1, 0, 0)
                 self.vis_goal_pub.publish(marker)
 
-        self.r.sleep()
+            self.r.sleep()
