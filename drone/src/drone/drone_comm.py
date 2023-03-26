@@ -48,6 +48,7 @@ class DroneComm:
         self.drone_pose = PoseStamped()
         self.path = Path()
         self.WAYPOINTS_RECEIVED = False
+        self.VICON_RECEIVED = False
         self.waypoint_goal = PoseStamped()
         self.waypoint_goal.header.stamp = rospy.Time.now()
         self.waypoint_goal.header.frame_id = "map"
@@ -109,6 +110,11 @@ class DroneComm:
         self.current_state = msg
 
     def vicon_callback(self, msg):
+        if self.VICON_RECEIVED:
+            return
+
+        self.VICON_RECEIVED = True
+        rospy.loginfo("Vicon Received")
 
         q = msg.transform.rotation
         [roll, pitch, yaw] = Transformation.get_euler_from_quaternion([q.w, q.x, q.y, q.z])
@@ -116,11 +122,11 @@ class DroneComm:
         vicon_position = [msg.transform.translation.x, msg.transform.translation.y, msg.transform.translation.z]
         self.vicon_transform = Transformation(vicon_position, vicon_quaternion)
 
-        transformed_position = self.vicon_transform.rotation_matrix @ self.vicon_transform.position
+        rospy.loginfo(self.vicon_transform.rotation_matrix)
 
-        self.drone_pose.pose.position.x = transformed_position[0]
-        self.drone_pose.pose.position.y = transformed_position[1]
-        self.drone_pose.pose.position.z = transformed_position[2]
+        self.drone_pose.pose.position.x = msg.transform.translation.x
+        self.drone_pose.pose.position.y = msg.transform.translation.y
+        self.drone_pose.pose.position.z = msg.transform.translation.z
 
         if self.vicon_pose_enabled:
             self.drone_pose.header = msg.header
@@ -285,15 +291,28 @@ class DroneComm:
         return EmptyResponse()
 
     def callback_waypoints(self, msg):
+        # Wait for Waypoints
         if self.WAYPOINTS_RECEIVED:
             return
+
+        # Wait for Vicon Transform
+        while not self.VICON_RECEIVED and not rospy.is_shutdown():
+            rospy.loginfo_throttle(1, "Waiting for Vicon Transformation")
+            self.r.sleep()
 
         rospy.loginfo("Waypoints Received")
 
         self.waypoint_index = 0
         self.WAYPOINTS_RECEIVED = True
         self.waypoints.header.stamp = rospy.Time.now()
-        self.waypoints.poses = msg.poses
+        for pt in msg.poses:
+            waypt = Transformation(position=[pt.position.x, pt.position.y, pt.position.z])
+            transformed_position = self.vicon_transform.rotation_matrix @ waypt.position
+            temp_pose = Pose()
+            temp_pose.position.x = transformed_position[0]
+            temp_pose.position.y = transformed_position[1]
+            temp_pose.position.z = transformed_position[2]
+            self.waypoints.poses.append(temp_pose)
 
         # Visualization
         if self.vis:

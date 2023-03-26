@@ -276,7 +276,7 @@ class Transformation(np.ndarray):
         return np.linalg.norm(t1[0:3, 3] - t2[0:3, 3])
 
     @staticmethod
-    def get_euler_from_quaternion(quaternion, seq="ZYX"):
+    def get_euler_from_quaternion(quaternion, seq="XYZ"):
         """
         Get the quaternion representation of euler angle rotations
 
@@ -288,7 +288,7 @@ class Transformation(np.ndarray):
         return r.as_euler(seq=seq)
 
     @staticmethod
-    def get_quaternion_from_euler(euler, seq="ZYX"):
+    def get_quaternion_from_euler(euler, seq="XYZ"):
         """
         Get the quaternion representation of euler angle rotations
 
