@@ -4,4 +4,4 @@ land_offset: -0.3
 launch_height: 1.5
 vicon_enabled: false
 rate: 20
-vis: true
+vis: false
