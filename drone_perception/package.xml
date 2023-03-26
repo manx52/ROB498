@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>drone_perception</name>
+  <version>0.0.0</version>
+  <description>Contains common files refered by other modules</description>
+  <maintainer email="jonathan.spraggett@mail.utoronto.ca">Jonathan Spraggett</maintainer>
+  <license>BSD</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <depend>rospy</depend>
+  <depend>geometry_msgs</depend>
+  <depend>drone_msgs</depend>
+  <depend>image_geometry</depend>
+  <depend>cv_bridge</depend>
+  <depend>sensor_msgs</depend>
+
+</package>

@@ -10,6 +10,10 @@ from std_msgs.msg import Int8
 import numpy as np
 from visualization_msgs.msg import Marker
 from visualization_msgs.msg import MarkerArray
+from tf.transformations import quaternion_from_euler
+import tf
+
+from drone_perception import Transformation
 
 
 class DroneComm:
@@ -37,13 +41,14 @@ class DroneComm:
         self.bool_test = False
         self.bool_land = False
         self.bool_abort = False
-        self.vicon_enabled = rospy.get_param("/vicon_enabled")
+        self.vicon_pose_enabled = rospy.get_param("/vicon_enabled")
         self.challenge4 = rospy.get_param("/challenge4")
 
         # Var
         self.drone_pose = PoseStamped()
         self.path = Path()
         self.WAYPOINTS_RECEIVED = False
+        self.VICON_RECEIVED = False
         self.waypoint_goal = PoseStamped()
         self.waypoint_goal.header.stamp = rospy.Time.now()
         self.waypoint_goal.header.frame_id = "map"
@@ -59,6 +64,7 @@ class DroneComm:
         self.current_state = State()
 
         self.r = rospy.Rate(rospy.get_param("/rate"))
+        self.vicon_transform = None
 
         # Services
         self.srv_launch = rospy.Service(node_name + '/comm/launch', Empty, self.callback_launch)
@@ -83,6 +89,7 @@ class DroneComm:
         self.setpoint_vel_pub = rospy.Publisher("mavros/setpoint_velocity/cmd_vel_unstamped", Twist, queue_size=10)
         self.vicon_pose_pub = rospy.Publisher("mavros/vision_pose/pose", PoseStamped, queue_size=10)
 
+        self.br = tf.TransformBroadcaster()
         if self.vis:
             self.vis_goal_pub = rospy.Publisher(node_name + '/comm/vis_goal', Marker, queue_size=1)
             self.vis_waypoints_pub = rospy.Publisher(node_name + '/comm/vis_waypoints', MarkerArray, queue_size=1)
@@ -103,7 +110,25 @@ class DroneComm:
         self.current_state = msg
 
     def vicon_callback(self, msg):
-        if self.vicon_enabled:
+        if self.VICON_RECEIVED:
+            return
+
+        self.VICON_RECEIVED = True
+        rospy.loginfo("Vicon Received")
+
+        q = msg.transform.rotation
+        [roll, pitch, yaw] = Transformation.get_euler_from_quaternion([q.w, q.x, q.y, q.z])
+        vicon_quaternion = Transformation.get_quaternion_from_euler([0, 0, yaw])
+        vicon_position = [msg.transform.translation.x, msg.transform.translation.y, msg.transform.translation.z]
+        self.vicon_transform = Transformation(vicon_position, vicon_quaternion)
+
+        rospy.loginfo(self.vicon_transform.rotation_matrix)
+
+        self.drone_pose.pose.position.x = msg.transform.translation.x
+        self.drone_pose.pose.position.y = msg.transform.translation.y
+        self.drone_pose.pose.position.z = msg.transform.translation.z
+
+        if self.vicon_pose_enabled:
             self.drone_pose.header = msg.header
             self.drone_pose.pose.position.x = msg.transform.translation.x
             self.drone_pose.pose.position.y = msg.transform.translation.y
@@ -131,29 +156,79 @@ class DroneComm:
             ]
         elif msg.data == 8:
             # 8 pt square
+
             pt1 = Point(1, 0, self.launch_height - self.offset)
-            pt2 = Point(1, 1, self.launch_height - self.offset)
-            pt3 = Point(1, 2, self.launch_height - self.offset)
-            pt4 = Point(0, 2, self.launch_height - self.offset)
-            pt5 = Point(-1, 2, self.launch_height - self.offset)
-            pt6 = Point(-1, 1, self.launch_height - self.offset)
-            pt7 = Point(-1, 0, self.launch_height - self.offset)
+            pt2 = Point(2, 0, self.launch_height - self.offset)
+            pt3 = Point(1.5, -3, self.launch_height - self.offset)
+            pt4 = Point(3, -5, self.launch_height - self.offset)
+            pt5 = Point(2, -6.5, self.launch_height - self.offset)
+            pt6 = Point(0, -5, self.launch_height - self.offset)
+            pt7 = Point(-1.8, -4, self.launch_height - self.offset)
             pt8 = Point(0, 0, self.launch_height - self.offset)
 
-            q1 = Quaternion(0, 0, 0, 1)
+            A = np.array((1, 0))
+            B = np.array((2, 0))
+            q1 = self.calc_quaternion(A, B)
+
+            B = np.array((1.5, -3))
+            A = np.array((2, 0))
+            q2 = self.calc_quaternion(A, B)
+
+            A = np.array((1.5, -3))
+            B = np.array((3, -5))
+            q3 = self.calc_quaternion(A, B)
+
+            B = np.array((2, -6.5))
+            A = np.array((3, -5))
+            q4 = self.calc_quaternion(A, B)
+
+            A = np.array((2, -6.5))
+            B = np.array((0, -5))
+            q5 = self.calc_quaternion(A, B)
+
+            B = np.array((-1.8, -4))
+            A = np.array((0, -5))
+            q6 = self.calc_quaternion(A, B)
+
+            A = np.array((-1.8, -4))
+            B = np.array((0, 0))
+            q7 = self.calc_quaternion(A, B)
+
             waypoints_test.poses = [
                 Pose(pt1, q1),
-                Pose(pt2, q1),
-                Pose(pt3, q1),
-                Pose(pt4, q1),
-                Pose(pt5, q1),
-                Pose(pt6, q1),
-                Pose(pt7, q1),
-                Pose(pt8, q1),
+                Pose(pt2, q2),
+                Pose(pt3, q3),
+                Pose(pt4, q4),
+                Pose(pt5, q5),
+                Pose(pt6, q6),
+                Pose(pt7, q7),
+                Pose(pt8, q7),
             ]
         self.callback_waypoints(waypoints_test)
 
     # Callback handlers
+    def calc_quaternion(self, A, B):
+        # a = np.cross(A, B)
+        # x = a[0]
+        # y = a[1]
+        # z = a[2]
+        # A_length = np.linalg.norm(A)
+        # B_length = np.linalg.norm(B)
+        # w = math.sqrt((A_length ** 2) * (B_length ** 2)) + np.dot(A, B)
+        #
+        # norm = math.sqrt(x ** 2 + y ** 2 + z ** 2 + w ** 2)
+        # if norm == 0:
+        #     norm = 1
+        #
+        # x /= norm
+        # y /= norm
+        # z /= norm
+        # w /= norm
+        temp = np.dot(A, B) / (np.linalg.norm(A) * np.linalg.norm(B))
+        theta = math.acos(temp)
+        q = quaternion_from_euler(0, 0, theta)
+
+        return Quaternion(q[0], q[1], q[2], q[3])
 
     def handle_launch(self):
         print('Launch Requested. Your drone should take off.')
@@ -216,15 +291,28 @@ class DroneComm:
         return EmptyResponse()
 
     def callback_waypoints(self, msg):
+        # Wait for Waypoints
         if self.WAYPOINTS_RECEIVED:
             return
+
+        # Wait for Vicon Transform
+        while not self.VICON_RECEIVED and not rospy.is_shutdown():
+            rospy.loginfo_throttle(1, "Waiting for Vicon Transformation")
+            self.r.sleep()
 
         rospy.loginfo("Waypoints Received")
 
         self.waypoint_index = 0
         self.WAYPOINTS_RECEIVED = True
         self.waypoints.header.stamp = rospy.Time.now()
-        self.waypoints.poses = msg.poses
+        for pt in msg.poses:
+            waypt = Transformation(position=[pt.position.x, pt.position.y, pt.position.z])
+            transformed_position = self.vicon_transform.rotation_matrix @ waypt.position
+            temp_pose = Pose()
+            temp_pose.position.x = transformed_position[0]
+            temp_pose.position.y = transformed_position[1]
+            temp_pose.position.z = transformed_position[2]
+            self.waypoints.poses.append(temp_pose)
 
         # Visualization
         if self.vis:

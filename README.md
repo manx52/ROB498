@@ -65,6 +65,14 @@ docker-compose -f docker-compose.yaml up
 docker-compose -f docker-compose.robot.yaml pull
 docker-compose -f docker-compose.robot.yaml up
 ```
+#### Services
+```bash
+rosservice call /rob498_drone_07/comm/launch
+rosservice call /rob498_drone_07/comm/test
+rosservice call /rob498_drone_07/comm/land
+rosservice call /rob498_drone_07/comm/abort
+```
+
 ### Testing Docker for CUDA on Jetson Nano
 - Open up 2 terminals
 - In one, run docker-compose -f docker-compose.robot.test.yaml up
@@ -78,7 +86,7 @@ torch.cuda.is_available()
 ```
 If the output is true then success CUDA is enabled on the docker.
 
-##### Controling Drone from remote computer
+### Controling Drone from remote computer
 Make sure your computer and the robot are connected to the same network, then use your personal computer as the ROS_MASTER_URI. You can find the IP address using ```ifconfig```
  - On your personal computer (or a dedicated server computer)
 ```bash

@@ -1,7 +1,7 @@
 <launch>
     <arg name="simulation" default="$(optenv SIM false)" />
-    <arg name="docker" default="$(optenv DOCKER_RUN false)"/>
     <arg name="challenge4" default="$(optenv CHALLENGE4 true)"/>
+    <arg name="docker" default="$(optenv DOCKER_RUN false)"/>
 
     <param name="simulation" type="bool" value="$(arg simulation)" />
     <param name="challenge4" type="bool" value="$(arg challenge4)" />

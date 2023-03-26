@@ -46,3 +46,4 @@ services:
       PYTHONUNBUFFERED: 1
       SIM: "false"
       CHALLENGE4: "true"
+      DOCKER_RUN: "true"
