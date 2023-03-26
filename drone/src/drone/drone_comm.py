@@ -13,6 +13,8 @@ from visualization_msgs.msg import MarkerArray
 from tf.transformations import quaternion_from_euler
 import tf
 
+from drone_perception import Transformation
+
 
 class DroneComm:
     def __init__(self):
@@ -39,7 +41,7 @@ class DroneComm:
         self.bool_test = False
         self.bool_land = False
         self.bool_abort = False
-        self.vicon_enabled = rospy.get_param("/vicon_enabled")
+        self.vicon_pose_enabled = rospy.get_param("/vicon_enabled")
         self.challenge4 = rospy.get_param("/challenge4")
 
         # Var
@@ -61,6 +63,7 @@ class DroneComm:
         self.current_state = State()
 
         self.r = rospy.Rate(rospy.get_param("/rate"))
+        self.vicon_transform = None
 
         # Services
         self.srv_launch = rospy.Service(node_name + '/comm/launch', Empty, self.callback_launch)
@@ -95,14 +98,6 @@ class DroneComm:
     def pose_callback(self, msg):
         self.drone_pose = msg
 
-        # self.br.sendTransform(
-        #     [self.drone_pose.pose.position.x, self.drone_pose.pose.position.y, self.drone_pose.pose.position.z],
-        #     [self.drone_pose.pose.orientation.x, self.drone_pose.pose.orientation.y, self.drone_pose.pose.orientation.z,
-        #      self.drone_pose.pose.orientation.w, ],
-        #     msg.header.stamp,
-        #     "drone/base_link",
-        #     "odom",
-        # )
         # Visualization
         if self.vis:
             self.path.header.stamp = rospy.Time.now()
@@ -114,7 +109,20 @@ class DroneComm:
         self.current_state = msg
 
     def vicon_callback(self, msg):
-        if self.vicon_enabled:
+
+        q = msg.transform.rotation
+        [roll, pitch, yaw] = Transformation.get_euler_from_quaternion([q.w, q.x, q.y, q.z])
+        vicon_quaternion = Transformation.get_quaternion_from_euler([0, 0, yaw])
+        vicon_position = [msg.transform.translation.x, msg.transform.translation.y, msg.transform.translation.z]
+        self.vicon_transform = Transformation(vicon_position, vicon_quaternion)
+
+        transformed_position = self.vicon_transform.rotation_matrix @ self.vicon_transform.position
+
+        self.drone_pose.pose.position.x = transformed_position[0]
+        self.drone_pose.pose.position.y = transformed_position[1]
+        self.drone_pose.pose.position.z = transformed_position[2]
+
+        if self.vicon_pose_enabled:
             self.drone_pose.header = msg.header
             self.drone_pose.pose.position.x = msg.transform.translation.x
             self.drone_pose.pose.position.y = msg.transform.translation.y
@@ -154,7 +162,7 @@ class DroneComm:
 
             A = np.array((1, 0))
             B = np.array((2, 0))
-            q1 = self.calc_quaternion(A,B)
+            q1 = self.calc_quaternion(A, B)
 
             B = np.array((1.5, -3))
             A = np.array((2, 0))
@@ -210,7 +218,7 @@ class DroneComm:
         # y /= norm
         # z /= norm
         # w /= norm
-        temp = np.dot(A,B) / (np.linalg.norm(A) * np.linalg.norm(B))
+        temp = np.dot(A, B) / (np.linalg.norm(A) * np.linalg.norm(B))
         theta = math.acos(temp)
         q = quaternion_from_euler(0, 0, theta)
 
