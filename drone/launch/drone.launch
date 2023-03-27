@@ -5,9 +5,9 @@
     <node pkg="drone" type="main.py" name="drone" required="true" output="screen">
     </node>
 
-    <include file="$(find drone)/launch/bridge_mavros.launch" unless="$(arg simulation)">
+    <!--<include file="$(find drone)/launch/bridge_mavros.launch" unless="$(arg simulation)">
 
-    </include>
+    </include>-->
 
     <group unless="$(arg docker)">
         <include file="$(find drone)/launch/mavros_posix_sitl.launch" if="$(arg simulation)">
