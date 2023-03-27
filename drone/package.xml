@@ -22,7 +22,6 @@
   <depend>mavros</depend>
   <depend>mavros_extras</depend>
   <depend>mavros_msgs</depend>
-  <depend>px4_realsense_bridge</depend>
   <depend>realsense2_camera</depend>
   <build_depend>gazebo_ros</build_depend>
   <build_depend>gazebo_msgs</build_depend>

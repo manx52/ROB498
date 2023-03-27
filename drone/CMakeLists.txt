@@ -28,7 +28,6 @@ find_package(
       mavlink
       gazebo_ros
       gazebo_msgs
-      px4_realsense_bridge
       realsense2_camera
 
 )
@@ -42,8 +41,7 @@ catkin_package(DEPENDS
       gazebo_ros
       gazebo_msgs
     CATKIN_DEPENDS
-    roscpp rospy std_msgs mavros_msgs geometry_msgs mav_msgs sensor_msgs  tf
-       realsense2_camera px4_realsense_bridge
+    roscpp rospy std_msgs mavros_msgs geometry_msgs mav_msgs sensor_msgs  tf realsense2_camera
     INCLUDE_DIRS
     LIBRARIES)
 catkin_python_setup()
