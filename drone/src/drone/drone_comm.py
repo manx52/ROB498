@@ -433,7 +433,7 @@ class DroneComm:
 
                     self.vis_waypoints_pub.publish(markerArray)
 
-                if error_pose < 0.1 and self.waypoint_index < (len(self.waypoints.poses) - 1):  # TODO tune
+                if error_pose < 0.075 and self.waypoint_index < (len(self.waypoints.poses) - 1):  # TODO tune
                     self.waypoint_index += 1
                     pose.pose = self.waypoints.poses[self.waypoint_index]
 

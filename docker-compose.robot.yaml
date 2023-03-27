@@ -46,7 +46,7 @@ services:
       - 'c 189:* rmw'
     # Command that runs when docker-compose pull is executed
     command:
-      /bin/bash -c "source ~/catkin_ws/devel/setup.bash  && roslaunch drone drone.launch || sleep infinity"
+      /bin/bash -c "source ~/catkin_ws/devel/setup.bash && roslaunch drone drone.launch || sleep infinity"
     environment:
       PYTHONUNBUFFERED: 1
       SIM: "false"
