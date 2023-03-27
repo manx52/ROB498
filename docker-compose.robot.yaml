@@ -2,10 +2,11 @@ version: "3.3"
 
 services:
   drone:
+    network_mode: host
     extends:
       file: docker-compose.yaml
       service: drone
-    image: utrarobosoccer/rob498:arm64
+    image: utrarobosoccer/rob498:arm64_team7
     build:
       context: .
       target: builder
@@ -15,7 +16,7 @@ services:
         - BASE_IMAGE=arm64v8/ros:noetic-robot
         - ARCHITECTURE=sbsa
       cache_from:
-        - utrarobosoccer/rob498:arm64
+        - utrarobosoccer/rob498:arm64_team7
     volumes:
       - /usr/lib/aarch64-linux-gnu/tegra:/usr/lib/aarch64-linux-gnu/tegra
       - /usr/local/cuda:/usr/local/cuda
@@ -39,9 +40,13 @@ services:
       - /usr/lib/aarch64-linux-gnu/libcudnn_ops_train.so.8:/usr/lib/aarch64-linux-gnu/libcudnn_ops_train.so.8
       - /usr/lib/aarch64-linux-gnu/libcudnn_static.a:/usr/lib/aarch64-linux-gnu/libcudnn_static.a
       - /usr/lib/aarch64-linux-gnu/libcudnn_static_v8.a:/usr/lib/aarch64-linux-gnu/libcudnn_static_v8.a
+      - /dev:/dev
+    device_cgroup_rules:
+      - 'c 81:* rmw'
+      - 'c 189:* rmw'
     # Command that runs when docker-compose pull is executed
     command:
-      /bin/bash -c
+      /bin/bash -c "source ~/catkin_ws/devel/setup.bash  && roslaunch drone drone.launch || sleep infinity"
     environment:
       PYTHONUNBUFFERED: 1
       SIM: "false"
