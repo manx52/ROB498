@@ -40,6 +40,10 @@ RUN apt-get update && apt-fast install -y --no-install-recommends \
     sudo \
     unzip \
     ros-noetic-robot-state-publisher \
+    ros-noetic-realsense2-camera \
+    ros-noetic-mavros \
+    ros-noetic-mavros-extras \
+    ros-noetic-pcl-ros \
     curl \
     libxkbcommon-x11-0 \
     libxcb-icccm4 \
@@ -110,6 +114,10 @@ WORKDIR /home/$USER/catkin_ws
 #    unzip /home/$USER/.cache/torch/hub/master.zip && \
 #    mv yolov5-master ultralytics_yolov5_master && \
 #    rm -rf master.zip
+
+# Install Geographiclib Datasets
+RUN wget https://raw.githubusercontent.com/mavlink/mavros/master/mavros/scripts/install_geographiclib_datasets.sh &&  \
+    sudo bash ./install_geographiclib_datasets.sh
 
 # Build Python ROS Packages
 COPY --from=dependencies --chown=$USER /root/src src/ROB498

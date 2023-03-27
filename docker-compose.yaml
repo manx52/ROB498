@@ -42,6 +42,10 @@ x-rob498: &rob498 #  <<: *gpu
     - /dev/dri:/dev/dri:rw
     - /dev/snd:/dev/snd:rw
     - /var/run/docker.sock:/var/run/docker.sock
+    - /dev:/dev
+  device_cgroup_rules:
+    - 'c 81:* rmw'
+    - 'c 189:* rmw'
 
 services:
   drone:

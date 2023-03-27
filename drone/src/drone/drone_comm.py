@@ -29,8 +29,8 @@ class DroneComm:
 
         # Simulation
         self.sim = rospy.get_param("/simulation")
-        if self.sim:
-            self.test_waypoints = rospy.Subscriber(node_name + '/comm/test_waypoints', Int8,
+
+        self.test_waypoints = rospy.Subscriber(node_name + '/comm/test_waypoints', Int8,
                                                    self.callback_test_waypoints)
         #     # self.gazebo_odom_sub = rospy.Subscriber('mavros/local_position/pose', Odometry, self.odom_callback)
         #     # self.vio_odom_sub = rospy.Subscriber('/camera/odom/sample_throttled', Odometry, self.odom_callback)
@@ -454,4 +454,4 @@ class DroneComm:
                 marker = self.vis_marker(pose.pose, 0, 1, 0, 0)
                 self.vis_goal_pub.publish(marker)
 
-        self.r.sleep()
+            self.r.sleep()
