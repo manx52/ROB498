@@ -27,8 +27,6 @@
   <depend>drone_msgs</depend>
   <depend>drone_perception</depend>
   <depend>realsense2_camera</depend>
-<!--  <depend>gazebo_ros</depend>-->
-<!--  <depend>gazebo_msgs</depend>-->
   <build_depend>gazebo_ros</build_depend>
   <build_depend>gazebo_msgs</build_depend>
   <exec_depend>gazebo_ros</exec_depend>
