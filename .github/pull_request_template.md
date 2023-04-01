@@ -1,0 +1,3 @@
+- [ ] Only the minimal change is included in this PR the commits are kept minimal
+- [ ] Code is readable and documented in the code
+- [ ] Minimal tests have been added

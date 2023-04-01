@@ -1,0 +1,29 @@
+name: Test Catkin Lint
+
+on:
+  push:
+    branches: [team_7]
+    paths-ignore:
+      - "**.md"
+  pull_request:
+    branches: [team_7]
+    paths-ignore:
+      - "**.md"
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: true
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Install catkin_lint
+        run: sudo apt update && sudo apt install catkin-lint
+
+      - name: Run catkin_lint
+        run: catkin_lint ${{github.workspace}}
