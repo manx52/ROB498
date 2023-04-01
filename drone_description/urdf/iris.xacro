@@ -1,16 +1,19 @@
 <?xml version="1.0"?>
 
-<robot name="ardrone" xmlns:xacro="http://ros.org/wiki/xacro">
+<robot name="iris" xmlns:xacro="http://ros.org/wiki/xacro">
   <!-- Properties -->
   <xacro:property name="namespace" value="$(arg namespace)" />
   <xacro:property name="rotor_velocity_slowdown_sim" value="10" />
   <xacro:property name="use_mesh_file" value="true" />
-  <xacro:property name="mesh_file" value="package://rotors_description/meshes/ardrone.dae" />
+  <xacro:property name="mesh_file" value="package://drone_description/meshes/iris.dae" />
   <xacro:property name="mass" value="1.5" /> <!-- [kg] -->
-  <xacro:property name="body_width" value="0.3" /> <!-- [m] -->
-  <xacro:property name="body_height" value="0.16" /> <!-- [m] -->
+  <xacro:property name="body_width" value="0.47" /> <!-- [m] -->
+  <xacro:property name="body_height" value="0.11" /> <!-- [m] -->
   <xacro:property name="mass_rotor" value="0.005" /> <!-- [kg] -->
-  <xacro:property name="arm_length" value="0.09" /> <!-- [m] -->
+  <xacro:property name="arm_length_front_x" value="0.13" /> <!-- [m] -->
+  <xacro:property name="arm_length_back_x" value="0.13" /> <!-- [m] -->
+  <xacro:property name="arm_length_front_y" value="0.22" /> <!-- [m] -->
+  <xacro:property name="arm_length_back_y" value="0.2" /> <!-- [m] -->
   <xacro:property name="rotor_offset_top" value="0.023" /> <!-- [m] -->
   <xacro:property name="radius_rotor" value="0.1" /> <!-- [m] -->
   <xacro:property name="motor_constant" value="8.54858e-06" /> <!-- [kg.m/s^2] -->
@@ -35,7 +38,7 @@
   </xacro:property>
 
   <!-- Included URDF Files -->
-  <xacro:include filename="$(find rotors_description)/urdf/multirotor_base.xacro" />
+  <xacro:include filename="$(find drone_description)/urdf/multirotor_base.xacro" />
 
   <!-- Instantiate multirotor_base_macro once -->
   <xacro:multirotor_base_macro
@@ -65,10 +68,10 @@
     motor_number="0"
     rotor_drag_coefficient="${rotor_drag_coefficient}"
     rolling_moment_coefficient="${rolling_moment_coefficient}"
-    color="Red"
+    color="Blue"
     use_own_mesh="false"
     mesh="">
-    <origin xyz="${sqrt2 * arm_length} -${sqrt2 * arm_length} ${rotor_offset_top}" rpy="0 0 0" />
+    <origin xyz="${arm_length_front_x} -${arm_length_front_y} ${rotor_offset_top}" rpy="0 0 0" />
     <xacro:insert_block name="rotor_inertia" />
   </xacro:vertical_rotor>
 
@@ -87,10 +90,10 @@
     motor_number="1"
     rotor_drag_coefficient="${rotor_drag_coefficient}"
     rolling_moment_coefficient="${rolling_moment_coefficient}"
-    color="Blue"
+    color="Red"
     use_own_mesh="false"
     mesh="">
-    <origin xyz="-${sqrt2 * arm_length} ${sqrt2 * arm_length} ${rotor_offset_top}" rpy="0 0 0" />
+    <origin xyz="-${arm_length_back_x} ${arm_length_back_y} ${rotor_offset_top}" rpy="0 0 0" />
     <xacro:insert_block name="rotor_inertia" />
   </xacro:vertical_rotor>
 
@@ -108,10 +111,10 @@
     motor_number="2"
     rotor_drag_coefficient="${rotor_drag_coefficient}"
     rolling_moment_coefficient="${rolling_moment_coefficient}"
-    color="Red"
+    color="Blue"
     use_own_mesh="false"
     mesh="">
-    <origin xyz="${sqrt2 * arm_length} ${sqrt2 * arm_length} ${rotor_offset_top}" rpy="0 0 0" />
+    <origin xyz="${arm_length_front_x} ${arm_length_front_y} ${rotor_offset_top}" rpy="0 0 0" />
     <xacro:insert_block name="rotor_inertia" />
   </xacro:vertical_rotor>
 
@@ -129,12 +132,80 @@
     motor_number="3"
     rotor_drag_coefficient="${rotor_drag_coefficient}"
     rolling_moment_coefficient="${rolling_moment_coefficient}"
-    color="Blue"
+    color="Red"
     use_own_mesh="false"
     mesh="">
-    <origin xyz="-${sqrt2 * arm_length} -${sqrt2 * arm_length} ${rotor_offset_top}" rpy="0 0 0" />
+    <origin xyz="-${arm_length_back_x} -${arm_length_back_y} ${rotor_offset_top}" rpy="0 0 0" />
     <xacro:insert_block name="rotor_inertia" />
   </xacro:vertical_rotor>
+  <xacro:property name="JOINT_KP" value="1e15"/>
+  <xacro:property name="JOINT_KD" value="1e13"/>
+  <xacro:property name="JOINT_MU1" value="0.2"/>
+  <xacro:property name="JOINT_MU2" value="0.2"/>
+  <xacro:property name="JOINT_FRICTION" value="0.1"/>
+  <xacro:property name="JOINT_DAMPING" value="0.01"/>
 
+  <link name="${namespace}/camera" >
+            <inertial>
+                <mass value="0.01"/>
+                <origin rpy="0  0  0" xyz="0 0 0"/>
+                <inertia ixx="1e-9" ixy="0" ixz="0"
+                         iyy="1e-9" iyz="0"
+                         izz="1e-9"/>
+            </inertial>
+        </link>
+        <joint name="${namespace}/camera" type="fixed">
+            <parent link="${namespace}/base_link"/>
+            <child link="${namespace}/camera"/>
+            <origin rpy="0 0 0" xyz="0.015 0.00145 0.04740"/>
+            <axis xyz="0  0  0"/>
+            <dynamics damping="${JOINT_DAMPING}" friction="${JOINT_FRICTION}" />
+            <limit effort="0" lower="0" upper="0" velocity="0"/>
+        </joint>
+        <gazebo reference="${namespace}/camera">
+            <sensor type="camera" name="main_camera" >
+                <always_on>1</always_on>
+                <visualize>1</visualize>
+                <update_rate>30</update_rate>
+                <camera>
+                    <horizontal_fov>1.047</horizontal_fov>
+                    <image>
+                        <width>320</width>
+                        <height>240</height>
+                        <format>R8G8B8</format>
+                    </image>
+                    <clip>
+                        <near>0.1</near>
+                        <far>100</far>
+                    </clip>
+                    <noise>
+                        <type>gaussian</type>
+                        <mean>0</mean>
+                        <stddev>0.007</stddev>
+                    </noise>
+                </camera>
+<!--                <plugin  filename='libgazebo_ros_camera.so' name='camera_controller'>-->
+<!--                    <alwaysOn>true</alwaysOn>-->
+<!--                    <updateRate>0.0</updateRate>-->
+<!--                    <cameraName>camera</cameraName>-->
+<!--                    <imageTopicName>image_raw</imageTopicName>-->
+<!--                    <cameraInfoTopicName>camera_info</cameraInfoTopicName>-->
+<!--                    <frameName>camera_link</frameName>-->
+<!--                    <hackBaseline>0.07</hackBaseline>-->
+<!--                    <distortionK1>0.0</distortionK1>-->
+<!--                    <distortionK2>0.0</distortionK2>-->
+<!--                    <distortionK3>0.0</distortionK3>-->
+<!--                    <distortionT1>0.0</distortionT1>-->
+<!--                    <distortionT2>0.0</distortionT2>-->
+<!--                </plugin>-->
+            </sensor>
+        </gazebo>
+
+        <gazebo reference="${namespace}/camera">
+            <kp>${JOINT_KP}</kp>
+            <kd>${JOINT_KD}</kd>
+            <mu1>${JOINT_MU1}</mu1>
+            <mu2>${JOINT_MU2}</mu2>
+        </gazebo>
 
 </robot>

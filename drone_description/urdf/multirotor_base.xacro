@@ -39,7 +39,9 @@
   <!-- Main multirotor link -->
   <xacro:macro name="multirotor_base_macro"
     params="robot_namespace mass body_width body_height use_mesh_file mesh_file *inertia">
-    <link name="${robot_namespace}/base_link"></link>
+    <link name="${robot_namespace}/base_link">
+
+    </link>
 
     <joint name="${robot_namespace}/base_joint" type="fixed">
       <origin xyz="0 0 0" rpy="0 0 0" />
@@ -108,7 +110,7 @@
               scale="1 1 1" />
           </xacro:if>
           <xacro:unless value="${use_own_mesh}">
-            <mesh filename="package://rotors_description/meshes/propeller_${direction}.dae"
+            <mesh filename="package://drone_description/meshes/propeller_${direction}.dae"
               scale="${radius_rotor} ${radius_rotor} ${radius_rotor}" /> <!-- The propeller meshes have a radius of 1m -->
             <!-- <box size="${2*radius_rotor} 0.01 0.005"/> -->
           </xacro:unless>

@@ -73,6 +73,31 @@ docker-compose -f docker-compose.yaml up
 docker-compose -f docker-compose.robot.yaml pull
 docker-compose -f docker-compose.robot.yaml up
 ```
+
+#### Test Waypoints and Vicon
+```bash
+rostopic pub /vicon/ROB498_Drone/ROB498_Drone geometry_msgs/TransformStamped "header:
+  seq: 0
+  stamp:
+    secs: 0
+    nsecs: 0
+  frame_id: ''
+child_frame_id: ''
+transform:
+  translation:
+    x: 0.0
+    y: 0.0
+    z: 0.0
+  rotation:
+    x: 0.0
+    y: 0.0
+    z: 0.0
+    w: 1.0" 
+    
+rostopic pub /rob498_drone_07/comm/test_waypoints std_msgs/Int8 "data: 8" # 4 or 8 depending on waypoints
+
+```
+
 #### Services
 ```bash
 rosservice call /rob498_drone_07/comm/launch

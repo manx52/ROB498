@@ -1,10 +1,10 @@
 <package format="2">
-  <name>rotors_description</name>
+  <name>drone_description</name>
   <version>2.2.3</version>
-  <description>The rotors_description package provides URDF models of the AscTec multicopters.</description>
+  <description>The drone_description package provides URDF models of the AscTec multicopters.</description>
 
   <maintainer email="fadri.furrer@mavt.ethz.ch">Fadri Furrer</maintainer>
-  <maintainer email="mina.kamel@mavt.ethz.ch">Mina Kamel</maintainer>
+
 
   <author>Fadri Furrer</author>
   <author>Michael Burri</author>

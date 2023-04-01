@@ -592,7 +592,7 @@
       noise_mean="0.0"
       noise_stddev="0.007"
       enable_visual="true">
-      <mesh filename="package://rotors_description/meshes/vi_camera.dae" scale="1 1 1" />
+      <mesh filename="package://drone_description/meshes/vi_camera.dae" scale="1 1 1" />
       <xacro:insert_block name="origin" />
     </xacro:camera_macro>
   </xacro:macro>
@@ -705,7 +705,7 @@
       <visual>
         <origin xyz="0 0 0" rpy="0 0 0" />
         <geometry>
-          <mesh filename="package://rotors_description/meshes/vi_sensor.dae" scale="1 1 1" />
+          <mesh filename="package://drone_description/meshes/vi_sensor.dae" scale="1 1 1" />
         </geometry>
       </visual>
 

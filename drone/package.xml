@@ -22,7 +22,7 @@
   <depend>mavros</depend>
   <depend>mavros_extras</depend>
   <depend>mavros_msgs</depend>
-  <depend>rotors_description</depend>
+  <depend>drone_description</depend>
   <depend>px4_realsense_bridge</depend>
   <depend>drone_msgs</depend>
   <depend>drone_perception</depend>
