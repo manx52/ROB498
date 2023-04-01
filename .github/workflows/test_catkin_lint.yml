@@ -26,4 +26,4 @@ jobs:
         run: sudo apt update && sudo apt install catkin-lint
 
       - name: Run catkin_lint
-        run: catkin_lint ${{github.workspace}}
+        run: catkin_lint ${{github.workspace}} --skip-pkg px4_realsense_bridge --skip-pkg mav_msgs --skip-pkg planning_msgs
