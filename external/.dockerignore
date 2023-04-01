@@ -6,5 +6,5 @@ Dockerfile
 docker-compose.*
 LICENSE
 venv/
-external/Dockerfile
-external/.dockerignore
+VIO/
+mav_comm/

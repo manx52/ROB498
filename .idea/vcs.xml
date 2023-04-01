@@ -2,6 +2,37 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/external/Firmware" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/external/Firmware/Tools/simulation/flightgear/flightgear_bridge" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/external/Firmware/Tools/simulation/flightgear/flightgear_bridge/models/Rascal" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/external/Firmware/Tools/simulation/flightgear/flightgear_bridge/models/TF-G1" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/external/Firmware/Tools/simulation/flightgear/flightgear_bridge/models/TF-G2" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/external/Firmware/Tools/simulation/flightgear/flightgear_bridge/models/TF-R1" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/external/Firmware/Tools/simulation/gazebo-classic/sitl_gazebo-classic" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/external/Firmware/Tools/simulation/gazebo-classic/sitl_gazebo-classic/external/OpticalFlow" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/external/Firmware/Tools/simulation/gazebo-classic/sitl_gazebo-classic/external/OpticalFlow/external/klt_feature_tracker" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/external/Firmware/Tools/simulation/jmavsim/jMAVSim" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/external/Firmware/Tools/simulation/jmavsim/jMAVSim/jMAVlib" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/external/Firmware/Tools/simulation/jsbsim/jsbsim_bridge" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/external/Firmware/Tools/simulation/jsbsim/jsbsim_bridge/models/ATI-Resolution" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/external/Firmware/Tools/simulation/jsbsim/jsbsim_bridge/models/Rascal" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/external/Firmware/platforms/nuttx/NuttX/apps" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/external/Firmware/platforms/nuttx/NuttX/nuttx" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/external/Firmware/src/drivers/cyphal/legacy_data_types" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/external/Firmware/src/drivers/cyphal/libcanard" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/external/Firmware/src/drivers/cyphal/public_regulated_data_types" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/external/Firmware/src/drivers/gps/devices" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/external/Firmware/src/drivers/uavcan/libuavcan" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/external/Firmware/src/drivers/uavcan/libuavcan/dsdl" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/external/Firmware/src/drivers/uavcan/libuavcan/libuavcan/dsdl_compiler/pyuavcan" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/external/Firmware/src/lib/crypto/libtomcrypt" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/external/Firmware/src/lib/crypto/libtommath" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/external/Firmware/src/lib/crypto/monocypher" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/external/Firmware/src/lib/events/libevents" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/external/Firmware/src/lib/events/libevents/libs/cpp/parse/nlohmann_json" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/external/Firmware/src/modules/mavlink/mavlink" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/external/Firmware/src/modules/mavlink/mavlink/pymavlink" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/external/Firmware/src/modules/microdds_client/Micro-XRCE-DDS-Client" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/external/VIO" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/external/mav_comm" vcs="Git" />
   </component>
