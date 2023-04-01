@@ -29,6 +29,12 @@ catkin_package(DEPENDS
       gazebo_ros
       gazebo_msgs
     CATKIN_DEPENDS
+       drone_msgs
     INCLUDE_DIRS
     LIBRARIES)
+
+catkin_install_python(PROGRAMS src/drone/main.py
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
 catkin_python_setup()

@@ -19,4 +19,8 @@ catkin_package(CATKIN_DEPENDS drone_msgs )
 # ##############################################################################
 include_directories(${catkin_INCLUDE_DIRS})
 
+catkin_install_python(PROGRAMS src/drone_perception/detector_obstacles.py
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
 catkin_python_setup()
