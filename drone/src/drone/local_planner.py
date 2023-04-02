@@ -1,6 +1,5 @@
-import numpy as np
 import rospy
-from geometry_msgs.msg import Twist, Pose, PoseStamped
+from geometry_msgs.msg import Twist, PoseStamped
 from tf.transformations import euler_from_quaternion
 
 from drone_perception import PID

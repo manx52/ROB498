@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
-import math
-import rospy
-from geometry_msgs.msg import PoseArray, Point, Pose
+from geometry_msgs.msg import PoseArray, Point
 from mavros_msgs.srv import CommandBool, SetMode
 from std_msgs.msg import Int8
 from std_srvs.srv import Empty, EmptyResponse
+
 from drone.utils import *
 
 

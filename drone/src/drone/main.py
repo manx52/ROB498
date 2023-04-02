@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-import os
 import numpy as np
 import rospy
+
 from drone.drone_comm import DroneComm
+
 np.set_printoptions(precision=3)
 
 if __name__ == "__main__":

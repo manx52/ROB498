@@ -1,21 +1,19 @@
 # !/usr/bin/env python3
 import math
-
-import rospy
-from geometry_msgs.msg import Quaternion, Pose, PoseStamped
-import numpy as np
-from visualization_msgs.msg import Marker
-from tf.transformations import quaternion_from_euler, euler_from_quaternion
 from typing import Tuple
 
-from drone_perception import Transformation
+import numpy as np
+import rospy
+from geometry_msgs.msg import Quaternion, Pose, PoseStamped
+from tf.transformations import quaternion_from_euler, euler_from_quaternion
+from visualization_msgs.msg import Marker
 
 """
 Utility Function
 """
 
 
-def calc_quaternion(A: np.ndarray, B: np.ndarray, Q: Quaternion) -> Quaternion:
+def calc_quaternion(A: np.ndarray, B: np.ndarray, Q: Quaternion, debug: bool = False) -> Quaternion:
     """
     Calculate the quaternion that represents the rotation required to align vector A with vector B.
 
@@ -31,28 +29,27 @@ def calc_quaternion(A: np.ndarray, B: np.ndarray, Q: Quaternion) -> Quaternion:
         axis of rotation (perpendicular to the plane formed by A and B) and the angle of rotation (the angle
         between A and B). The axis-angle representation is then converted to a quaternion using the
         `quaternion_from_euler()` function from the `tf.transformations` module.
+        :param debug:
+        :param B:
+        :param A:
         :param Q:
 
     """
     euler = euler_from_quaternion([Q.x, Q.y, Q.z, Q.w])
-    # print(euler[2])
-    # curr_vector = [math.cos(euler[2]), math.sin(euler[2])]
-    # next_vector = B - A
-
+    # Calculate the angle of rotation
     theta_d = np.arctan2((B[1] - A[1]), (B[0] - A[0]))
     theta = euler[2]
     heading_error = theta_d - theta
     heading_error_norm = math.atan2(math.sin(heading_error), math.cos(heading_error))
-    # print(cos_angle)
 
-    # Calculate the angle of rotation
-    # theta = (math.acos(cos_angle))
-
-    # Convert the axis-angle representation to a quaternion
+    # Convert the euler-angle representation to a quaternion
     q = quaternion_from_euler(0, 0, theta_d)
-    print(theta_d)
-    print(q)
+    if debug:
+        print(theta_d)
+        print(q)
+
     # Return the quaternion as a Quaternion object
+
     return Quaternion(q[0], q[1], q[2], q[3])
 
 

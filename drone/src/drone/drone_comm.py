@@ -1,16 +1,14 @@
 #!/usr/bin/env python3
-import math
-import rospy
-from geometry_msgs.msg import Twist, Pose, PoseStamped, PoseArray
+from geometry_msgs.msg import Twist, PoseArray
 from mavros_msgs.msg import State
 from mavros_msgs.srv import CommandBoolRequest, SetModeRequest
 from nav_msgs.msg import Path
 from visualization_msgs.msg import MarkerArray
-from drone.utils import *
-from drone_perception import Transformation
-from drone.vicon import Vicon
+
 from drone.services import Services
-from drone.local_planner import LocalPlanner
+from drone.utils import *
+from drone.vicon import Vicon
+from drone_perception import Transformation
 
 
 class DroneComm:
@@ -40,11 +38,8 @@ class DroneComm:
         # Create submodules
         self.vicon = Vicon(self)
         self.services = Services(self, node_name)
-        self.local_planner = LocalPlanner(self)
 
         # Initialize variables
-        self.launch = False
-        self.test = False
         self.drone_pose = PoseStamped()
         self.path = Path()
         self.WAYPOINTS_RECEIVED = False
@@ -113,8 +108,8 @@ class DroneComm:
         """
 
         # Wait for waypoints to be received
-        # if self.WAYPOINTS_RECEIVED:
-        #     return
+        if self.WAYPOINTS_RECEIVED:
+            return
 
         # Wait for Vicon Transform
         while not self.vicon.VICON_RECEIVED and not rospy.is_shutdown():
@@ -166,7 +161,6 @@ class DroneComm:
 
         # Set the initial waypoint as the goal waypoint
         pose = self.waypoint_goal
-        self.local_planner.new_point(pose)
 
         # Send a few setpoints before starting to ensure smooth takeoff
         for i in range(100):
@@ -221,11 +215,15 @@ class DroneComm:
             if self.services.bool_test and self.WAYPOINTS_RECEIVED:
                 # Set the current waypoint as the goal waypoint
                 pose.pose = self.waypoints.poses[self.waypoint_index]
-                if not self.test:
-                    self.test = True
-                    self.local_planner.new_point(pose)
+
                 # Calculate the error in current waypoint
                 error_pose = waypoint_error(pose, self.drone_pose)
+
+                if error_pose > 0.3:
+                    A = np.array((self.drone_pose.pose.position.x, self.drone_pose.pose.position.y))
+                    B = np.array((pose.pose.position.x, pose.pose.position.y))
+                    q = calc_quaternion(A, B, self.drone_pose.pose.orientation)
+                    pose.pose.orientation = q
 
                 # Visualization: Create markers for all the waypoints, set the ones before the current waypoint as
                 # red and the current and remaining waypoints as green
@@ -254,22 +252,13 @@ class DroneComm:
                     A = np.array((self.drone_pose.pose.position.x, self.drone_pose.pose.position.y))
                     B = np.array((pose.pose.position.x, pose.pose.position.y))
                     q = calc_quaternion(A, B, self.drone_pose.pose.orientation)
-                    #q = quaternion_from_euler(0, 0, self.waypoint_index * 0.872665)
                     pose.pose.orientation = q
-                    self.local_planner.new_point(pose)
-
-                twist_msg = self.local_planner.velocity_command(self.drone_pose)
 
             else:
                 # If boolean test is False or waypoints have not been received
                 # Set the goal waypoint as the current waypoint
                 pose = self.waypoint_goal
 
-                if self.services.bool_launch and not self.launch:
-                    self.launch = True
-                    self.local_planner.new_point(pose)
-
-                twist_msg = self.local_planner.velocity_command(self.drone_pose)
                 # Calculate the error between the goal waypoint and drone's current pose
                 error_pose = waypoint_error(pose, self.drone_pose)
 
@@ -277,6 +266,7 @@ class DroneComm:
             pose.header.stamp = rospy.Time.now()
             euler = euler_from_quaternion(
                 [pose.pose.orientation.x, pose.pose.orientation.y, pose.pose.orientation.z, pose.pose.orientation.w])
+
             # Log the waypoint index and error to the console
             msg = "Waypoint {index:} Pos.x {x:} Pos.y {y:} Pos.z {z:} YAW: {yaw:} error: {error:}"
             rospy.loginfo_throttle(1, msg.format(index=self.waypoint_index, error=error_pose,
@@ -284,12 +274,12 @@ class DroneComm:
                                                  y=pose.pose.position.y,
                                                  z=pose.pose.position.z,
                                                  yaw=euler[2],
-                                                 #twist=twist_msg,
                                                  ))
 
             # Publish the goal waypoint to the drone's local position topic
-            # self.local_pos_pub.publish(pose)
-            self.setpoint_vel_pub.publish(twist_msg)
+            self.local_pos_pub.publish(pose)
+            # self.setpoint_vel_pub.publish(twist_msg)
+
             # Visualization
             if self.vis:
                 # If visualization is enabled
