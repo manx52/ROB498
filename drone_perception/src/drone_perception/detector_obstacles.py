@@ -20,16 +20,28 @@ from drone_perception.detector import Detector
 
 
 class DetectorObstacles(Detector):
+    """
+    A class that detects obstacles from an image stream.
+    """
+
     def __init__(self):
+        """
+        Initializes the DetectorObstacles class.
+
+        Args:
+            None
+
+        Returns:
+            None
+        """
+
         super().__init__()
 
-        # self.initial_pose_subscriber = rospy.Subscriber("initialpose", PoseWithCovarianceStamped,
-        #                                                 self.initial_pose_callback, queue_size=1)
+        # Initialize subscribers and publishers
         self.image_subscriber = rospy.Subscriber(
             rospy.get_param("/detector_obstacles/camera_topic") + "image_raw", Image, self.image_callback, queue_size=1,
             buff_size=DEFAULT_BUFF_SIZE * 64
         )  # Large buff size (https://answers.ros.org/question/220502/image-subscriber-lag-despite-queue-1/)
-
         self.bounding_box_publisher = rospy.Publisher("camera/bounding_box", Image, queue_size=1)
         self.green_mask_publisher = rospy.Publisher("camera/green_mask", Image, queue_size=1)
         self.red_mask_publisher = rospy.Publisher("camera/red_mask", Image, queue_size=1)
@@ -37,80 +49,97 @@ class DetectorObstacles(Detector):
         self.red_mask_point_cloud_publisher = rospy.Publisher("red_mask_point_cloud", PointCloud2, queue_size=1)
         self.tf_broadcaster = TransformBroadcaster()
 
-        # TODO tune
+        # Initialize point cloud parameters and publishing flag
         self.point_cloud_max_distance = rospy.get_param("point_cloud_max_distance", 15)
         self.point_cloud_spacing = rospy.get_param("point_cloud_spacing", 30)
         self.publish_point_cloud = True
 
+        # Initialize random number generator seed
         cv2.setRNGSeed(12345)
-        pass
-
-    # def initial_pose_callback(self, initial_pose: PoseWithCovarianceStamped):
-    #     self.publish_point_cloud = True
 
     def image_callback(self, img: Image, debug=False):
+        """
+        Callback function for image topic subscription.
+        Detects obstacles in the image and publishes their corresponding masks and point clouds.
 
+        :param img: Image message received from the camera
+        :param debug: Boolean flag for showing debug information
+        :return: None
+        """
+
+        # Record start time
         t_start = time.time()
 
+        # Check if the camera is ready
         if not self.camera.ready():
             return
 
-        # # Uncomment for ground truth
         rospy.loginfo_once("Started Publishing Obstacles")
 
+        # Convert ROS image message to OpenCV image
         image = CvBridge().imgmsg_to_cv2(img, desired_encoding="rgb8")
 
+        # Apply bilateral filtering to reduce noise
         image_crop_blurred = cv2.bilateralFilter(image, 9, 75, 75)
 
+        # Convert the image to HSV color space for better color segmentation
         hsv = cv2.cvtColor(src=image_crop_blurred, code=cv2.COLOR_BGR2HSV)
 
+        # Show debug images if debug flag is True
         if debug:
             cv2.imshow("CVT Color", image)
             cv2.imshow("CVT Color Contrast", image_crop_blurred)
             cv2.waitKey(0)
 
-        # Grass Mask
-        # Hue > 115 needed
+        # Create masks for green and red obstacles in the image
         green_only = cv2.inRange(hsv, (35, 85, 0), (115, 255, 255))
         red_only = cv2.inRange(hsv, (100, 70, 50), (180, 255, 255))
 
+        # Publish point clouds and masks for green and red obstacles
         self.point_cloud_processing(image, img.header, green_only, self.green_mask_publisher,
                                     self.green_mask_point_cloud_publisher)
         self.point_cloud_processing(image, img.header, red_only, self.red_mask_publisher,
                                     self.red_mask_point_cloud_publisher)
 
+        # Publish bounding box image message if there are subscribers
         if self.bounding_box_publisher.get_num_connections() > 0:
             img_out = CvBridge().cv2_to_imgmsg(image)
             img_out.header = img.header
             self.bounding_box_publisher.publish(img_out)
 
+        # Record end time and log the detection rate
         t_end = time.time()
         rospy.loginfo_throttle(60, "Obstacle detection rate: " + str(t_end - t_start))
 
     def point_cloud_processing(self, image, img_header, img, image_publisher, point_cloud_publisher):
-        # Find bounding box
+        """
+        Process a point cloud image and publish it to ROS topics.
+
+        :param image: Input image as a numpy array.
+        :param img_header: Header information for the input image.
+        :param img: Binary image with contours.
+        :param image_publisher: ROS publisher for the input image.
+        :param point_cloud_publisher: ROS publisher for the output point cloud.
+        :return: None.
+        """
+        # Find bounding box for each contour
         cnts, hierarchy = cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         box = []
         for i, region in enumerate(cnts):
             x, y, w, h = cv2.boundingRect(region)
             boundingBoxes = [[x, y + h], [x + w, y]]
-            # msg = "boundingBoxes {index:} "
-            # rospy.loginfo_throttle(1, msg.format(
-            #     index=boundingBoxes))
-            # # print(self.camera.calculateBallFromBoundingBoxes(0.3,boundingBoxes).position)
-            # msg = "Obstacle Position {index:} "
-            # rospy.loginfo_throttle(1, msg.format(
-            #     index=self.camera.calculateBallFromBoundingBoxes(0.3, boundingBoxes).position))
-            # area = cv2.contourArea(cnts[i])
-            # cv2.drawContours(image, cnts, i, (255, 0, 0), 3)
+
+            # Draw bounding box on the input image
             cv2.rectangle(image, (x, y), (x + w, y + h), (0, 0, 255), 2)
             box.append(self.camera.calculateBallFromBoundingBoxes(0.3, boundingBoxes))
 
+        # Publish the input image if there is any subscriber
         if image_publisher.get_num_connections() > 0:
             img_out = CvBridge().cv2_to_imgmsg(img)
             img_out.header = img_header
             image_publisher.publish(img_out)
 
+        # Create point cloud message and publish it if there is any subscriber
         if self.publish_point_cloud and point_cloud_publisher.get_num_connections() > 0:
             points3d = []
 
@@ -120,7 +149,7 @@ class DetectorObstacles(Detector):
                 if pt.norm_squared < self.point_cloud_max_distance ** 2:  # TODO remove lines behind
                     points3d.append(pt.position)
 
-            # Publish fieldlines in laserscan format
+            # Publish point cloud message
             header = Header()
             header.stamp = img_header.stamp
             header.frame_id = "map"

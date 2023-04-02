@@ -17,7 +17,7 @@ class TestCommon(TestCase):
     def test_vicon_transformation(self):
         # q = t.quaternion
         # [roll, pitch, yaw] = Transformation.get_euler_from_quaternion([q.w, q.x, q.y, q.z])
-        vicon_quaternion = Transformation.get_quaternion_from_euler([0, 0, 1.5708])
+        vicon_quaternion = Transformation.get_quaternion_from_euler([0, 0, 1.57])
         vicon_position = [1,0,1]
         vicon_transform = Transformation(vicon_position, vicon_quaternion)
 

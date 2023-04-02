@@ -5,3 +5,4 @@ launch_height: 1.5
 vicon_enabled: false
 rate: 20
 vis: true
+error_tol: 0.075
