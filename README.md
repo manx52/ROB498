@@ -1,7 +1,7 @@
 [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 [![Docker Image CI](https://github.com/manx52/ROB498/actions/workflows/docker_image.yml/badge.svg)](https://github.com/manx52/ROB498/actions/workflows/docker_image.yml)
 [![Docker Image Arm64 CI](https://github.com/manx52/ROB498/actions/workflows/docker_image_arm.yml/badge.svg)](https://github.com/manx52/ROB498/actions/workflows/docker_image_arm.yml)
-[![Documentation Status](https://readthedocs.org/projects/ROB498/badge/?version=latest)](https://manx52.github.io/ROB498/api.html)
+[![Documentation Status](https://readthedocs.org/projects/rob498/badge/?version=latest)](https://manx52.github.io/ROB498/api.html)
 [![Docker Image Size](https://badgen.net/docker/size/utrarobosoccer/rob498?icon=docker&label=image%20size)](https://hub.docker.com/r/utrarobosoccer/rob498/)
 [![Docker Pulls](https://badgen.net/docker/pulls/utrarobosoccer/rob498?icon=docker&label=pulls)](https://hub.docker.com/r/utrarobosoccer/rob498/)
 
