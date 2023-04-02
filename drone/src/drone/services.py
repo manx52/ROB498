@@ -175,43 +175,16 @@ class Services:
             pt7 = Point(-1.8, -4, self.node.launch_height - self.node.offset)
             pt8 = Point(0, 0, self.node.launch_height - self.node.offset)
 
-            A = np.array((1, 0))
-            B = np.array((2, 0))
-            q1 = calc_quaternion(A, B)
-
-            B = np.array((1.5, -3))
-            A = np.array((2, 0))
-            q2 = calc_quaternion(A, B)
-
-            A = np.array((1.5, -3))
-            B = np.array((3, -5))
-            q3 = calc_quaternion(A, B)
-
-            B = np.array((2, -6.5))
-            A = np.array((3, -5))
-            q4 = calc_quaternion(A, B)
-
-            A = np.array((2, -6.5))
-            B = np.array((0, -5))
-            q5 = calc_quaternion(A, B)
-
-            B = np.array((-1.8, -4))
-            A = np.array((0, -5))
-            q6 = calc_quaternion(A, B)
-
-            A = np.array((-1.8, -4))
-            B = np.array((0, 0))
-            q7 = calc_quaternion(A, B)
-
+            q1 = Quaternion(0, 0, 0, 1)
             waypoints_test.poses = [
                 Pose(pt1, q1),
-                Pose(pt2, q2),
-                Pose(pt3, q3),
-                Pose(pt4, q4),
-                Pose(pt5, q5),
-                Pose(pt6, q6),
-                Pose(pt7, q7),
-                Pose(pt8, q7),
+                Pose(pt2, q1),
+                Pose(pt3, q1),
+                Pose(pt4, q1),
+                Pose(pt5, q1),
+                Pose(pt6, q1),
+                Pose(pt7, q1),
+                Pose(pt8, q1),
             ]
 
         # Send waypoints

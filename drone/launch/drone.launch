@@ -39,11 +39,11 @@
 
     <group unless="$(arg docker)">
 
-        <include file="$(find drone)/launch/gui.launch" />
+<!--        <include file="$(find drone)/launch/gui.launch" />-->
 
-        <include file="$(find drone)/launch/mavros_posix_sitl.launch" if="$(arg simulation)" >
-            <arg name="challenge4" value="$(arg challenge4)" />
-        </include>
+<!--        <include file="$(find drone)/launch/mavros_posix_sitl.launch" if="$(arg simulation)" >-->
+<!--            <arg name="challenge4" value="$(arg challenge4)" />-->
+<!--        </include>-->
 
     </group>
 

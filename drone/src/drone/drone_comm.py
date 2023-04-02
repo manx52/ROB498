@@ -3,19 +3,21 @@ import math
 import rospy
 from geometry_msgs.msg import Twist, Pose, PoseStamped, PoseArray
 from mavros_msgs.msg import State
-from mavros_msgs.srv import CommandBoolRequest,SetModeRequest
+from mavros_msgs.srv import CommandBoolRequest, SetModeRequest
 from nav_msgs.msg import Path
 from visualization_msgs.msg import MarkerArray
 from drone.utils import *
 from drone_perception import Transformation
 from drone.vicon import Vicon
 from drone.services import Services
+from drone.local_planner import LocalPlanner
 
 
 class DroneComm:
     """
     ROS node that controls a drone.
     """
+
     def __init__(self):
         """
         Constructor for DroneComm class.
@@ -38,8 +40,11 @@ class DroneComm:
         # Create submodules
         self.vicon = Vicon(self)
         self.services = Services(self, node_name)
+        self.local_planner = LocalPlanner(self)
 
         # Initialize variables
+        self.launch = False
+        self.test = False
         self.drone_pose = PoseStamped()
         self.path = Path()
         self.WAYPOINTS_RECEIVED = False
@@ -108,8 +113,8 @@ class DroneComm:
         """
 
         # Wait for waypoints to be received
-        if self.WAYPOINTS_RECEIVED:
-            return
+        # if self.WAYPOINTS_RECEIVED:
+        #     return
 
         # Wait for Vicon Transform
         while not self.vicon.VICON_RECEIVED and not rospy.is_shutdown():
@@ -147,27 +152,6 @@ class DroneComm:
 
             self.vis_waypoints_pub.publish(markerArray)
 
-    def velocity_command(self, pose):
-        """
-        Calculate the velocity command required to move the drone towards a given pose
-
-        :param pose: ROS Pose message indicating the target position
-        :return: ROS Twist message indicating the required velocity command
-        """
-        vel = Twist()
-        x_diff, y_diff, z_diff = position_diff(pose, self.drone_pose)
-
-        # Clip velocity to maximum allowable value
-        max_vel = 0.5
-        x_clip = np.clip(x_diff, -max_vel, max_vel)
-        y_clip = np.clip(y_diff, -max_vel, max_vel)
-        z_clip = np.clip(z_diff, -max_vel, max_vel)
-        vel.linear.x = x_clip
-        vel.linear.y = y_clip
-        vel.linear.z = z_clip
-
-        return vel
-
     # Main communication node for ground control
     def run(self):
         """
@@ -182,6 +166,7 @@ class DroneComm:
 
         # Set the initial waypoint as the goal waypoint
         pose = self.waypoint_goal
+        self.local_planner.new_point(pose)
 
         # Send a few setpoints before starting to ensure smooth takeoff
         for i in range(100):
@@ -226,6 +211,7 @@ class DroneComm:
             # Create a PoseStamped object with header frame id set to 'map'
             pose = PoseStamped()
             pose.header.frame_id = "map"
+            twist_msg = Twist()
 
             # Create a MarkerArray object for visualization
             markerArray = MarkerArray()
@@ -235,7 +221,9 @@ class DroneComm:
             if self.services.bool_test and self.WAYPOINTS_RECEIVED:
                 # Set the current waypoint as the goal waypoint
                 pose.pose = self.waypoints.poses[self.waypoint_index]
-
+                if not self.test:
+                    self.test = True
+                    self.local_planner.new_point(pose)
                 # Calculate the error in current waypoint
                 error_pose = waypoint_error(pose, self.drone_pose)
 
@@ -263,24 +251,45 @@ class DroneComm:
                     self.waypoint_index += 1
                     pose.pose = self.waypoints.poses[self.waypoint_index]
 
+                    A = np.array((self.drone_pose.pose.position.x, self.drone_pose.pose.position.y))
+                    B = np.array((pose.pose.position.x, pose.pose.position.y))
+                    q = calc_quaternion(A, B, self.drone_pose.pose.orientation)
+                    #q = quaternion_from_euler(0, 0, self.waypoint_index * 0.872665)
+                    pose.pose.orientation = q
+                    self.local_planner.new_point(pose)
+
+                twist_msg = self.local_planner.velocity_command(self.drone_pose)
+
             else:
                 # If boolean test is False or waypoints have not been received
                 # Set the goal waypoint as the current waypoint
                 pose = self.waypoint_goal
 
+                if self.services.bool_launch and not self.launch:
+                    self.launch = True
+                    self.local_planner.new_point(pose)
+
+                twist_msg = self.local_planner.velocity_command(self.drone_pose)
                 # Calculate the error between the goal waypoint and drone's current pose
                 error_pose = waypoint_error(pose, self.drone_pose)
 
             # Set the timestamp of the pose header to the current time
             pose.header.stamp = rospy.Time.now()
-
+            euler = euler_from_quaternion(
+                [pose.pose.orientation.x, pose.pose.orientation.y, pose.pose.orientation.z, pose.pose.orientation.w])
             # Log the waypoint index and error to the console
-            msg = "Waypoint {index:} error: {error:}"
-            rospy.loginfo_throttle(1, msg.format(index=self.waypoint_index, error=error_pose))
+            msg = "Waypoint {index:} Pos.x {x:} Pos.y {y:} Pos.z {z:} YAW: {yaw:} error: {error:}"
+            rospy.loginfo_throttle(1, msg.format(index=self.waypoint_index, error=error_pose,
+                                                 x=pose.pose.position.x,
+                                                 y=pose.pose.position.y,
+                                                 z=pose.pose.position.z,
+                                                 yaw=euler[2],
+                                                 #twist=twist_msg,
+                                                 ))
 
             # Publish the goal waypoint to the drone's local position topic
-            self.local_pos_pub.publish(pose)
-
+            # self.local_pos_pub.publish(pose)
+            self.setpoint_vel_pub.publish(twist_msg)
             # Visualization
             if self.vis:
                 # If visualization is enabled

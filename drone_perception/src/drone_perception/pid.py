@@ -25,23 +25,26 @@ class PID:
         self.last_value = 0
         pass
 
-    def reset(self) -> None:
+    def reset(self, setpoint) -> None:
         """
         Resets the PID controller to be used again
         """
         self.integral = 0
         self.last_error = 0
         self.last_value = 0
+        self.setpoint = setpoint
 
     def update(self, measurement: float, delta_t: float = 1) -> float:
         """
         Takes a measurement and updates the PID, returns the gain used by the PID controller
 
+        :param setpoint:
         :param measurement: The measurement used to compare against the setpoint
         :param delta_t: The time passed since the measurement
         :return: The gain to apply to the PID controller as a result
         """
         error = self.setpoint - measurement
+
         derivative = error - self.last_error
 
         value = ((self.Kp * error) + (self.Ki * self.integral) + (self.Kd * derivative)) * delta_t
