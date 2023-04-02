@@ -1,1 +1,1 @@
-camera_topic: "/iris/usb_cam/"
+camera_topic: "camera/t265/image"  #"/iris/usb_cam/"

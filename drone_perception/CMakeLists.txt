@@ -23,4 +23,8 @@ catkin_install_python(PROGRAMS src/drone_perception/detector_obstacles.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
+catkin_install_python(PROGRAMS src/drone_perception/t265_stero.py
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
 catkin_python_setup()

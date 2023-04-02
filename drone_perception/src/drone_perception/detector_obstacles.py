@@ -38,10 +38,17 @@ class DetectorObstacles(Detector):
         super().__init__()
 
         # Initialize subscribers and publishers
+        self.disparity = None
         self.image_subscriber = rospy.Subscriber(
-            rospy.get_param("/detector_obstacles/camera_topic") + "image_raw", Image, self.image_callback, queue_size=1,
+            rospy.get_param("/detector_obstacles/camera_topic"), Image, self.image_callback, queue_size=1,
+            buff_size=DEFAULT_BUFF_SIZE * 64
+        )  # Large buff size (https://answers.ros.org/question/220502/image-subscriber-lag-despite-queue-1/
+
+        self.image_disparity_subscriber = rospy.Subscriber(
+           "camera/t265/disparity", Image, self.image_disparity_callback, queue_size=1,
             buff_size=DEFAULT_BUFF_SIZE * 64
         )  # Large buff size (https://answers.ros.org/question/220502/image-subscriber-lag-despite-queue-1/)
+
         self.bounding_box_publisher = rospy.Publisher("camera/bounding_box", Image, queue_size=1)
         self.green_mask_publisher = rospy.Publisher("camera/green_mask", Image, queue_size=1)
         self.red_mask_publisher = rospy.Publisher("camera/red_mask", Image, queue_size=1)
@@ -71,19 +78,19 @@ class DetectorObstacles(Detector):
         t_start = time.time()
 
         # Check if the camera is ready
-        if not self.camera.ready():
-            return
+        # if not self.camera.ready():
+        #     return
 
         rospy.loginfo_once("Started Publishing Obstacles")
 
         # Convert ROS image message to OpenCV image
-        image = CvBridge().imgmsg_to_cv2(img, desired_encoding="rgb8")
+        image = CvBridge().imgmsg_to_cv2(img, desired_encoding="8UC3")
 
         # Apply bilateral filtering to reduce noise
         image_crop_blurred = cv2.bilateralFilter(image, 9, 75, 75)
-
+        img_grey = cv2.cvtColor(image_crop_blurred, cv2.COLOR_BGR2GRAY)
         # Convert the image to HSV color space for better color segmentation
-        hsv = cv2.cvtColor(src=image_crop_blurred, code=cv2.COLOR_BGR2HSV)
+        # hsv = cv2.cvtColor(src=image_crop_blurred, code=cv2.COLOR_BGR2HSV)
 
         # Show debug images if debug flag is True
         if debug:
@@ -92,14 +99,16 @@ class DetectorObstacles(Detector):
             cv2.waitKey(0)
 
         # Create masks for green and red obstacles in the image
-        green_only = cv2.inRange(hsv, (35, 85, 0), (115, 255, 255))
-        red_only = cv2.inRange(hsv, (100, 70, 50), (180, 255, 255))
-
+        # green_only = cv2.inRange(hsv, (0, 0, 0), (180, 255, 30)) #(0, 0, 0), (180, 255, 30)
+        # red_only = cv2.inRange(hsv, (100, 70, 50), (180, 255, 255))
+        ret, green_only = cv2.threshold(img_grey, 100, 255, cv2.THRESH_BINARY)
+        # green_only = cv2.adaptiveThreshold(img_grey, 127, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, \
+        #                            cv2.THRESH_BINARY, 11, 2)
         # Publish point clouds and masks for green and red obstacles
         self.point_cloud_processing(image, img.header, green_only, self.green_mask_publisher,
                                     self.green_mask_point_cloud_publisher)
-        self.point_cloud_processing(image, img.header, red_only, self.red_mask_publisher,
-                                    self.red_mask_point_cloud_publisher)
+        # self.point_cloud_processing(image, img.header, red_only, self.red_mask_publisher,
+        #                             self.red_mask_point_cloud_publisher)
 
         # Publish bounding box image message if there are subscribers
         if self.bounding_box_publisher.get_num_connections() > 0:
@@ -110,6 +119,22 @@ class DetectorObstacles(Detector):
         # Record end time and log the detection rate
         t_end = time.time()
         rospy.loginfo_throttle(60, "Obstacle detection rate: " + str(t_end - t_start))
+
+    def image_disparity_callback(self, img: Image, debug=False):
+        """
+        Callback function for image topic subscription.
+        Detects obstacles in the image and publishes their corresponding masks and point clouds.
+
+        :param img: Image message received from the camera
+        :param debug: Boolean flag for showing debug information
+        :return: None
+        """
+
+        # Convert ROS image message to OpenCV image
+        image = CvBridge().imgmsg_to_cv2(img, desired_encoding="32FC1")
+        self.disparity = image
+        # # Apply bilateral filtering to reduce noise
+        # image_crop_blurred = cv2.bilateralFilter(image, 9, 75, 75)
 
     def point_cloud_processing(self, image, img_header, img, image_publisher, point_cloud_publisher):
         """
@@ -132,6 +157,29 @@ class DetectorObstacles(Detector):
             # Draw bounding box on the input image
             cv2.rectangle(image, (x, y), (x + w, y + h), (0, 0, 255), 2)
             box.append(self.camera.calculateBallFromBoundingBoxes(0.3, boundingBoxes))
+
+            y1 = x
+            z1 = y + h
+            y2 = x+w
+            z2 = y
+
+            # Assuming the ball is a sphere, the bounding box must be a square, averaging the borders
+            ym = int((y1 + y2) / 2)
+            zm = int((z1 + z2) / 2)
+
+            if self.disparity is not None:
+                disp_in_box = np.asarray(self.disparity[x:x+w,y:y+h]).reshape(-1,1)
+                vals, counts = np.unique(disp_in_box, return_counts=True)
+                mode_disparity = vals[np.argwhere(counts == np.max(counts))]
+
+                if self.disparity[ym,zm] != -1:
+                    depth = (8.896 * 28.72)/mode_disparity
+                # if self.disparity[ym,zm] != -1:
+                #     depth = (8.896 * 28.72)/self.disparity[ym,zm]
+
+                    # print(depth)
+
+
 
         # Publish the input image if there is any subscriber
         if image_publisher.get_num_connections() > 0:
