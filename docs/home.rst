@@ -13,28 +13,28 @@ Hardware
 ===============================
 
 .. image:: ./images/Hardware.png
-  :width: 400
+  :width: 500
 
 .. image:: ./images/Hardware_2.png
-  :width: 400
+  :width: 500
 
 Challenge 2: Stable Hover
 ===============================
 ..  youtube:: 8mcuc0-HUeY
 .. image:: ./images/challenge_2_results.png
-  :width: 400
+  :width: 500
 
 Challenge 3: Waypoint Navigation
 ===============================
 ..  youtube:: pLiu4lUnUiU
 .. image:: ./images/c3_1.png
-  :width: 400
+  :width: 500
 
 .. image:: ./images/c3_2.png
-  :width: 400
+  :width: 500
 
 .. image:: ./images/c3_3.png
-  :width: 400
+  :width: 500
 
 
 Midterm Slides
