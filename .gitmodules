@@ -4,6 +4,3 @@
 [submodule "external/mav_comm"]
 	path = external/mav_comm
 	url = git@github.com:PX4/mav_comm.git
-[submodule "external/px4-sitl-docker"]
-	path = external/px4-sitl-docker
-	url = git@github.com:manx52/px4-sitl-docker.git
