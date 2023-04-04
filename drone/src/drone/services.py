@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-from geometry_msgs.msg import PoseArray, Point
+import rospy
+from geometry_msgs.msg import PoseArray, Point, TransformStamped
 from mavros_msgs.srv import CommandBool, SetMode
 from std_msgs.msg import Int8
 from std_srvs.srv import Empty, EmptyResponse
@@ -14,6 +15,7 @@ class Services:
     the requested action. It also subscribes to the 'test_waypoints' topic to receive commands for performing different
     waypoint tests.
     """
+
     def __init__(self, node, node_name):
         """
         Constructor function for the Services class.
@@ -29,6 +31,8 @@ class Services:
         self.bool_land = False
         self.bool_abort = False
 
+        self.unlimited_test = rospy.get_param("/unlimited_waypts")
+
         # Services
         self.srv_launch = rospy.Service(node_name + '/comm/launch', Empty, self.callback_launch)
         self.srv_test = rospy.Service(node_name + '/comm/test', Empty, self.callback_test)
@@ -43,8 +47,14 @@ class Services:
         self.set_mode_client = rospy.ServiceProxy("mavros/set_mode", SetMode)
 
         # Subscribe to 'test_waypoints' topic
+        self.test_env = rospy.Subscriber(node_name + '/comm/test_env', Int8,
+                                         self.callback_test_env)
         self.test_waypoints = rospy.Subscriber(node_name + '/comm/test_waypoints', Int8,
-                                               self.callback_test_waypoints)
+                                               self.callback_test_waypoints) \
+
+        # Publisher
+        self.send_vicon = rospy.Publisher("/vicon/ROB498_Drone/ROB498_Drone", TransformStamped, queue_size=10)
+        self.send_waypts = rospy.Publisher(node_name + '/comm/test_waypoints', Int8, queue_size=10)
 
     def handle_launch(self):
         """
@@ -69,6 +79,10 @@ class Services:
         Helper function that sets the boolean flags for the drone to perform a test.
         """
         print('Test Requested. Your drone should perform the required tasks. Recording starts now.')
+
+        if self.unlimited_test:
+            self.node.waypoint_index = 0
+
         self.bool_launch = False
         self.bool_test = True
         self.bool_land = False
@@ -188,3 +202,27 @@ class Services:
 
         # Send waypoints
         self.node.callback_waypoints(waypoints_test)
+
+    def callback_test_env(self, msg):
+        """
+
+        :param msg:
+        :return:
+        """
+        rospy.loginfo("Test Setup")
+
+        vicon_pose = TransformStamped()
+        vicon_pose.transform.translation.x = 0.0
+        vicon_pose.transform.translation.y = 0.0
+        vicon_pose.transform.translation.z = 0.0
+        vicon_pose.transform.rotation.x = 0.0
+        vicon_pose.transform.rotation.y = 0.0
+        vicon_pose.transform.rotation.z = 0.0
+        vicon_pose.transform.rotation.w = 1.0
+
+        self.send_vicon.publish(vicon_pose)
+
+        waypt_num = Int8()
+        waypt_num.data = msg.data
+
+        self.send_waypts.publish(waypt_num)

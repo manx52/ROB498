@@ -9,6 +9,7 @@ from drone.services import Services
 from drone.utils import *
 from drone.vicon import Vicon
 from drone_perception import Transformation
+from drone.local_planner import LocalPlanner
 
 
 class DroneComm:
@@ -33,11 +34,11 @@ class DroneComm:
         self.sim = rospy.get_param("/simulation")
         self.r = rospy.Rate(rospy.get_param("/rate"))
         self.error_tol = rospy.get_param("/error_tol")
-        self.challenge4 = rospy.get_param("/challenge4")
 
         # Create submodules
         self.vicon = Vicon(self)
         self.services = Services(self, node_name)
+        self.local_planner = LocalPlanner(self)
 
         # Initialize variables
         self.drone_pose = PoseStamped()
@@ -83,7 +84,7 @@ class DroneComm:
         self.drone_pose = msg
 
         # Publish visualization data if required
-        if self.vis:
+        if self.vis and self.sim:
             self.path.header.stamp = rospy.Time.now()
             self.path.header.frame_id = "map"
             self.path.poses.append(self.drone_pose)
@@ -202,78 +203,18 @@ class DroneComm:
 
                         last_req = rospy.Time.now()
 
-            # Create a PoseStamped object with header frame id set to 'map'
-            pose = PoseStamped()
-            pose.header.frame_id = "map"
-            twist_msg = Twist()
+            error_pos, heading_error_norm, pose = self.local_planner.waypoint_nav(pose)
 
-            # Create a MarkerArray object for visualization
-            markerArray = MarkerArray()
-
-            # If new waypoints are received, update the current waypoint and check if the drone has reached the
-            # current waypoint
-            if self.services.bool_test and self.WAYPOINTS_RECEIVED:
-                # Set the current waypoint as the goal waypoint
-                pose.pose = self.waypoints.poses[self.waypoint_index]
-
-                # Calculate the error in current waypoint
-                error_pose = waypoint_error(pose, self.drone_pose)
-
-                if error_pose > 0.3:
-                    A = np.array((self.drone_pose.pose.position.x, self.drone_pose.pose.position.y))
-                    B = np.array((pose.pose.position.x, pose.pose.position.y))
-                    q = calc_quaternion(A, B, self.drone_pose.pose.orientation)
-                    pose.pose.orientation = q
-
-                # Visualization: Create markers for all the waypoints, set the ones before the current waypoint as
-                # red and the current and remaining waypoints as green
-                if self.vis:
-                    for i, pt in enumerate(self.waypoints.poses):
-                        if i <= self.waypoint_index:
-                            marker = vis_marker(pt, 1, 0, 0, 2)
-                            markerArray.markers.append(marker)
-                            markerArray.markers[i].id = i
-                        else:
-                            marker = vis_marker(pt, 1, 0, 0, 0)
-                            markerArray.markers.append(marker)
-                            markerArray.markers[i].id = i
-
-                    # Publish the marker array for visualization
-                    self.vis_waypoints_pub.publish(markerArray)
-
-                # Check if the error between the drone's current pose and the current waypoint is within the error
-                # tolerance and there are more waypoints in the sequence
-                if error_pose < self.error_tol and self.waypoint_index < (len(self.waypoints.poses) - 1):  # TODO tune
-                    # If the drone has reached the current waypoint and there are more waypoints in the sequence,
-                    # set the next waypoint as the current one and update the drone's pose
-                    self.waypoint_index += 1
-                    pose.pose = self.waypoints.poses[self.waypoint_index]
-
-                    A = np.array((self.drone_pose.pose.position.x, self.drone_pose.pose.position.y))
-                    B = np.array((pose.pose.position.x, pose.pose.position.y))
-                    q = calc_quaternion(A, B, self.drone_pose.pose.orientation)
-                    pose.pose.orientation = q
-
-            else:
-                # If boolean test is False or waypoints have not been received
-                # Set the goal waypoint as the current waypoint
-                pose = self.waypoint_goal
-
-                # Calculate the error between the goal waypoint and drone's current pose
-                error_pose = waypoint_error(pose, self.drone_pose)
-
-            # Set the timestamp of the pose header to the current time
-            pose.header.stamp = rospy.Time.now()
-            euler = euler_from_quaternion(
-                [pose.pose.orientation.x, pose.pose.orientation.y, pose.pose.orientation.z, pose.pose.orientation.w])
+            yaw = calc_yaw(pose.pose.orientation)
 
             # Log the waypoint index and error to the console
-            msg = "Waypoint {index:} Pos.x {x:} Pos.y {y:} Pos.z {z:} YAW: {yaw:} error: {error:}"
-            rospy.loginfo_throttle(1, msg.format(index=self.waypoint_index, error=error_pose,
+            msg = "Waypoint {index:} Pos.x {x:} Pos.y {y:} Pos.z {z:} YAW: {yaw:} Error Position: {error:} Error Yaw: {er:}"
+            rospy.loginfo_throttle(1, msg.format(index=self.waypoint_index, error=error_pos,
                                                  x=pose.pose.position.x,
                                                  y=pose.pose.position.y,
                                                  z=pose.pose.position.z,
-                                                 yaw=euler[2],
+                                                 yaw=yaw,
+                                                 er=heading_error_norm,
                                                  ))
 
             # Publish the goal waypoint to the drone's local position topic

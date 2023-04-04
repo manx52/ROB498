@@ -9,6 +9,7 @@ class Vicon:
     """
     Handles Vicon data for drone pose estimation.
     """
+
     def __init__(self, node):
         """
         Constructor for the Vicon class.
@@ -16,9 +17,9 @@ class Vicon:
         """
         self.node = node
 
-        self.vicon_pose_enabled = rospy.get_param("/vicon_enabled") # Check if Vicon data is enabled.
-        self.VICON_RECEIVED = False # Flag to indicate if Vicon data has been received.
-        self.vicon_transform = None # Placeholder for Vicon transformation object.
+        self.vicon_pose_enabled = rospy.get_param("/vicon_enabled")  # Check if Vicon data is enabled.
+        self.VICON_RECEIVED = False  # Flag to indicate if Vicon data has been received.
+        self.vicon_transform = None  # Placeholder for Vicon transformation object.
 
         # Create a ROS subscriber for Vicon data.
         self.vicon_sub = rospy.Subscriber("/vicon/ROB498_Drone/ROB498_Drone", TransformStamped, self.vicon_callback)
@@ -32,9 +33,9 @@ class Vicon:
         :param msg: The Vicon data message.
         """
         if self.VICON_RECEIVED:
-            return # Ignore Vicon data if already received.
+            return  # Ignore Vicon data if already received.
 
-        self.VICON_RECEIVED = True # Set flag to indicate Vicon data has been received.
+        self.VICON_RECEIVED = True  # Set flag to indicate Vicon data has been received.
         rospy.loginfo("Vicon Received")
 
         # Extract roll, pitch, and yaw from Vicon quaternion.
@@ -53,7 +54,7 @@ class Vicon:
         rospy.loginfo(self.vicon_transform.rotation_matrix)
 
         # Update drone position based on Vicon data.
-        self.node.drone_pose.pose.position.x = msg.transform.translation.x
+        self.node.drone_pose.pose.position.x = msg.transform.translation.x  # TODO Fix
         self.node.drone_pose.pose.position.y = msg.transform.translation.y
         self.node.drone_pose.pose.position.z = msg.transform.translation.z
 

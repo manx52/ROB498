@@ -1,17 +1,26 @@
 # !/usr/bin/env python3
+from geometry_msgs.msg import Point
 
 from drone.utils import *
 
-A = np.array((0, 0))
-B = np.array((1, 0))
-q1 = calc_quaternion(A, B, Quaternion(x=0, y=0, z=0, w=1), True)
+A = PoseStamped()
+B = PoseStamped()
 
-A = np.array((1, 0))
-B = np.array((1, 1))
-q2 = calc_quaternion(A, B, Quaternion(x=0, y=0, z=0, w=1), True)
-A = np.array((1, 1))
-B = np.array((0, 1))
-q3 = calc_quaternion(A, B, Quaternion(x=0, y=0, z=0, w=1), True)
-A = np.array((0, 1))
-B = np.array((0, 0))
-q4 = calc_quaternion(A, B, Quaternion(x=0, y=0, z=0, w=1), True)
+A.pose.orientation = Quaternion(x=0, y=0, z=0, w=1)
+A.pose.orientation = Quaternion(x=0, y=0, z=0, w=1)
+
+A.pose.position = Point(x=0, y=0, z=1)
+B.pose.position = Point(x=1, y=0, z=1)
+waypoint_pose_error(A, B, True)
+
+A.pose.position = Point(x=1, y=0, z=1)
+B.pose.position = Point(x=1, y=1, z=1)
+waypoint_pose_error(A, B, True)
+
+A.pose.position = Point(x=1, y=1, z=1)
+B.pose.position = Point(x=0, y=1, z=1)
+waypoint_pose_error(A, B, True)
+
+A.pose.position = Point(x=0, y=1, z=1)
+B.pose.position = Point(x=0, y=0, z=1)
+waypoint_pose_error(A, B, True)
