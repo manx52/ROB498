@@ -7,3 +7,4 @@ rate: 20
 vis: true
 error_tol: 0.13
 unlimited_waypts: true
+rotate_angle: 0.523599 # 30 degree

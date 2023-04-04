@@ -1,5 +1,6 @@
 from typing import Tuple, Any
 
+import rosparam
 import rospy
 from geometry_msgs.msg import Twist, PoseStamped
 from tf.transformations import euler_from_quaternion
@@ -14,13 +15,79 @@ class LocalPlanner:
         Constructor for the LocalPlanner class.
         :param node: Main ROS node
         """
-        self.set_yaw = 0
         self.node = node
         self.yawing = 0
+        self.rotate_angle = rosparam.get_param("/rotate_angle")
+
+    def rotating(self, theta_d: float, heading_error_norm: float, curr_pose: PoseStamped) -> Tuple[float, float]:
+        """
+
+        :param heading_error_norm:
+        :param theta_d:
+        :param curr_pose:
+        :return:
+        """
+
+        # Default Straight
+        head_err_norm = heading_error_norm
+        yaw = theta_d
+
+        if self.yawing == 1:  # Right
+            theta = calc_yaw(curr_pose.pose.orientation)
+            yaw = (theta_d + 0.523599)  # % (2 * np.pi)1.5708
+            head_error = yaw - theta
+            head_err_norm = math.atan2(math.sin(head_error), math.cos(head_error))
+
+            rospy.loginfo_throttle(1, "yaw == 1")
+        elif self.yawing == 2:  # Left
+            theta = calc_yaw(curr_pose.pose.orientation)
+            yaw = (theta_d - 0.523599)  # % (2 * np.pi) #0.523599
+            head_error = yaw - theta
+            head_err_norm = math.atan2(math.sin(head_error), math.cos(head_error))
+
+            rospy.loginfo_throttle(1, "yaw == 2")
+            # msg = "Yaw:  " + str(yaw) + " theta: " + str(theta) + " theta_d: " + str(theta_d)
+            # rospy.loginfo_throttle(1, msg)
+
+        return yaw, head_err_norm
+
+    def update_waypoint(self, error_pos: float, pose_goal: PoseStamped, curr_pose: PoseStamped) -> PoseStamped:
+        """
+
+        :param error_pos:
+        :param pose_goal:
+        :param curr_pose:
+        :return:
+        """
+        # Check if the error between the drone's current pose and the current waypoint is within the error
+        # tolerance and there are more waypoints in the sequence
+        if error_pos < self.node.error_tol and self.node.waypoint_index < (
+                len(self.node.waypoints.poses) - 1):  # TODO tune
+            # If the drone has reached the current waypoint and there are more waypoints in the sequence,
+            # set the next waypoint as the current one and update the drone's pose
+            msg = "Waypoint " + str(self.node.waypoint_index) + " Cleared"
+            rospy.loginfo_throttle(1, msg)
+
+            self.node.waypoint_index += 1
+
+            error_pos, theta_d, heading_error_norm = waypoint_pose_error(
+                self.node.waypoints.poses[self.node.waypoint_index], self.node.drone_pose)
+            q = quaternion_from_euler(0, 0, theta_d)
+
+            pose_goal.pose = curr_pose.pose  # self.node.waypoints.poses[self.node.waypoint_index]
+            pose_goal.pose.orientation = Quaternion(q[0], q[1], q[2], q[3])
+            self.yawing = 0
+        else:
+            # Set the current waypoint as the goal waypoint
+            pose_goal.pose = self.node.waypoints.poses[self.node.waypoint_index]
+            pose_goal.pose.orientation = curr_pose.pose.orientation
+
+        return pose_goal
 
     def waypoint_nav(self, curr_pose: PoseStamped) -> Tuple[float, float, PoseStamped]:
         """
 
+        :param curr_pose:
         :return:
         """
         # Create a PoseStamped object with header frame id set to 'map'
@@ -38,24 +105,7 @@ class LocalPlanner:
             error_pos, theta_d, heading_error_norm = waypoint_pose_error(
                 self.node.waypoints.poses[self.node.waypoint_index], self.node.drone_pose)
 
-            if self.yawing == 0 or self.yawing == 3:  # Straight
-                yaw = theta_d
-            elif self.yawing == 1:  # Right
-                theta = calc_yaw(curr_pose.pose.orientation)
-                yaw = (theta_d + 0.523599) #% (2 * np.pi)1.5708
-                head_error = yaw - theta
-                heading_error_norm = math.atan2(math.sin(head_error), math.cos(head_error))
-
-                rospy.loginfo_throttle(1, "yaw == 1")
-            elif self.yawing == 2:  # Left
-                theta = calc_yaw(curr_pose.pose.orientation)
-                yaw = (theta_d - 0.523599) #% (2 * np.pi) #0.523599
-                head_error = yaw - theta
-                heading_error_norm = math.atan2(math.sin(head_error), math.cos(head_error))
-
-                rospy.loginfo_throttle(1, "yaw == 2")
-                # msg = "Yaw:  " + str(yaw) + " theta: " + str(theta) + " theta_d: " + str(theta_d)
-                # rospy.loginfo_throttle(1, msg)
+            yaw, heading_error_norm = self.rotating(theta_d, heading_error_norm, curr_pose)
 
             q = quaternion_from_euler(0, 0, yaw)
             # While holding position rotate to direction of new point
@@ -66,9 +116,6 @@ class LocalPlanner:
 
             elif self.yawing == 3:
 
-                # Set the current waypoint as the goal waypoint
-                pose_goal.pose = self.node.waypoints.poses[self.node.waypoint_index]
-                pose_goal.pose.orientation = curr_pose.pose.orientation
                 # Visualization: Create markers for all the waypoints, set the ones before the current waypoint as
                 # red and the current and remaining waypoints as green
                 if self.node.vis:
@@ -85,31 +132,15 @@ class LocalPlanner:
                     # Publish the marker array for visualization
                     self.node.vis_waypoints_pub.publish(markerArray)
 
-                # Check if the error between the drone's current pose and the current waypoint is within the error
-                # tolerance and there are more waypoints in the sequence
-                if error_pos < self.node.error_tol and self.node.waypoint_index < (
-                        len(self.node.waypoints.poses) - 1):  # TODO tune
-                    # If the drone has reached the current waypoint and there are more waypoints in the sequence,
-                    # set the next waypoint as the current one and update the drone's pose
-                    msg = "Waypoint " + str(self.node.waypoint_index) + " Cleared"
-                    rospy.loginfo_throttle(1, msg)
-
-                    self.node.waypoint_index += 1
-
-                    error_pos, theta_d, heading_error_norm = waypoint_pose_error(
-                        self.node.waypoints.poses[self.node.waypoint_index], self.node.drone_pose)
-                    q = quaternion_from_euler(0, 0, theta_d)
-
-                    pose_goal.pose = curr_pose.pose  # self.node.waypoints.poses[self.node.waypoint_index]
-                    pose_goal.pose.orientation = Quaternion(q[0], q[1], q[2], q[3])
-                    self.yawing = 0
+                pose_goal = self.update_waypoint(error_pos, pose_goal, curr_pose)
 
             else:
                 for i in range(30):
                     if rospy.is_shutdown():
                         break
                     pose_goal.pose.position = curr_pose.pose.position
-                    pose_goal.pose.orientation = curr_pose.pose.orientation  # Quaternion(q[0], q[1], q[2], q[3])
+                    pose_goal.pose.orientation = curr_pose.pose.orientation
+
                     self.node.local_pos_pub.publish(pose_goal)
                     self.node.r.sleep()
                 self.yawing += 1
