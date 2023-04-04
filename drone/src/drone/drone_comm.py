@@ -151,7 +151,7 @@ class DroneComm:
     # Main communication node for ground control
     def run(self):
         """
-        Main loop to send velocity commands to the drone to follow the specified waypoints
+        Main loop to send position commands to the drone to follow the specified waypoints
 
         :return: None
         """

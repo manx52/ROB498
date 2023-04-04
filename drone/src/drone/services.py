@@ -165,9 +165,9 @@ class Services:
         waypoints_test.header.stamp = rospy.Time.now()
         if msg.data == 4:
             # 4 pt square
-            pt1 = Point(1, 0, self.node.launch_height - self.node.offset)
-            pt2 = Point(1, 1, self.node.launch_height - self.node.offset)
-            pt3 = Point(0, 1, self.node.launch_height - self.node.offset)
+            pt1 = Point(2, 0, self.node.launch_height - self.node.offset)
+            pt2 = Point(2, 2, self.node.launch_height - self.node.offset)
+            pt3 = Point(0, 2, self.node.launch_height - self.node.offset)
             pt4 = Point(0, 0, self.node.launch_height - self.node.offset)
             q1 = Quaternion(0, 0, 0, 1)
             waypoints_test.poses = [
@@ -226,3 +226,7 @@ class Services:
         waypt_num.data = msg.data
 
         self.send_waypts.publish(waypt_num)
+
+        self.handle_launch()
+
+
