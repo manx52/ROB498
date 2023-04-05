@@ -4,7 +4,7 @@ from mavros_msgs.msg import State
 from mavros_msgs.srv import CommandBoolRequest, SetModeRequest
 from nav_msgs.msg import Path
 from visualization_msgs.msg import MarkerArray
-
+import tf
 from drone.services import Services
 from drone.utils import *
 from drone.vicon import Vicon
@@ -83,6 +83,17 @@ class DroneComm:
 
         self.drone_pose = msg
 
+        # Create a transform broadcaster
+        br = tf.TransformBroadcaster()
+
+        # Broadcast the transform
+        br.sendTransform(
+            (msg.pose.position.x, msg.pose.position.y, msg.pose.position.z),
+            (msg.pose.orientation.x, msg.pose.orientation.y, msg.pose.orientation.z, msg.pose.orientation.w),
+            rospy.Time.now(),
+            "base_link",
+            "map"
+        )
         # Publish visualization data if required
         if self.vis and self.sim:
             self.path.header.stamp = rospy.Time.now()

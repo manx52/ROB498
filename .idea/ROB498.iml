@@ -5,6 +5,7 @@
       <sourceFolder url="file://$MODULE_DIR$/drone/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/drone_common/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/drone_perception/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/drone_mapping/src" isTestSource="false" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

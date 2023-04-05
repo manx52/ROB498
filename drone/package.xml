@@ -26,6 +26,7 @@
   <depend>px4_realsense_bridge</depend>
   <depend>drone_msgs</depend>
   <depend>drone_perception</depend>
+  <depend>drone_mapping</depend>
   <depend>realsense2_camera</depend>
   <build_depend>gazebo_ros</build_depend>
   <build_depend>gazebo_msgs</build_depend>

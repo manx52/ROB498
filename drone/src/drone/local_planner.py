@@ -106,8 +106,8 @@ class LocalPlanner:
                 self.node.waypoints.poses[self.node.waypoint_index], self.node.drone_pose)
 
             yaw, heading_error_norm = self.rotating(theta_d, heading_error_norm, curr_pose)
-
             q = quaternion_from_euler(0, 0, yaw)
+
             # While holding position rotate to direction of new point
             if abs(heading_error_norm) > 0.1 and error_pos > 0.3:
                 pose_goal.pose.position = curr_pose.pose.position

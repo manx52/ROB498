@@ -17,6 +17,7 @@ find_package(
       gazebo_ros
       gazebo_msgs
       drone_description
+      drone_mapping
       px4_realsense_bridge
       drone_perception
       drone_msgs

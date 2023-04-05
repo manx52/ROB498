@@ -1,0 +1,9 @@
+robot_frame: "base_link"
+map_frame: "map"
+map_center_x: 0
+map_center_y: 0
+map_size_x: 10
+map_size_y: 10
+map_resolution: 0.1
+map_publish_freq: 1.0
+update_movement: 0.1

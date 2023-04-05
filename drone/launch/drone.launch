@@ -52,12 +52,9 @@
 
     </include>
 
+    <node name="drone_mapping" pkg="drone_mapping" type="main.py" output="screen">
+        <rosparam file="$(find drone_mapping)/config/config.yaml" command="load" />
+        </node>
 
-    <!-- Simulation vio -->
-<!--	<node pkg="drone" type="sim_odom" name="sim_odom" output="screen" if="$(arg simulation)" />-->
-
-<!--    <include file="$(find px4_realsense_bridge)/launch/bridge_mavros_sitl.launch" if="$(arg simulation)">-->
-
-<!--	</include>-->
 
 </launch>

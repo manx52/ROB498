@@ -52,7 +52,7 @@ class DetectorObstacles(Detector):
         # Initialize point cloud parameters and publishing flag
         self.point_cloud_max_distance = rospy.get_param("point_cloud_max_distance", 15)
         self.point_cloud_spacing = rospy.get_param("point_cloud_spacing", 30)
-        self.publish_point_cloud = True
+        self.publish_point_cloud = False
 
         # Initialize random number generator seed
         cv2.setRNGSeed(12345)
@@ -132,6 +132,12 @@ class DetectorObstacles(Detector):
             # Draw bounding box on the input image
             cv2.rectangle(image, (x, y), (x + w, y + h), (0, 0, 255), 2)
             box.append(self.camera.calculateBallFromBoundingBoxes(0.3, boundingBoxes))
+
+        if len(cnts) > 0:
+            self.publish_point_cloud = True
+        else:
+
+            self.publish_point_cloud = False
 
         # Publish the input image if there is any subscriber
         if image_publisher.get_num_connections() > 0:
