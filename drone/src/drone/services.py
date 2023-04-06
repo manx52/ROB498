@@ -181,9 +181,9 @@ class Services:
 
             pt1 = Point(1, 0, self.node.launch_height - self.node.offset)
             pt2 = Point(2, 0, self.node.launch_height - self.node.offset)
-            pt3 = Point(1.5, -3, self.node.launch_height - self.node.offset)
+            pt3 = Point(1.25, -3.5, self.node.launch_height - self.node.offset)
             pt4 = Point(3, -5, self.node.launch_height - self.node.offset)
-            pt5 = Point(2, -6.5, self.node.launch_height - self.node.offset)
+            pt5 = Point(0.5, -6, self.node.launch_height - self.node.offset)
             pt6 = Point(0, -5, self.node.launch_height - self.node.offset)
             pt7 = Point(-1.8, -4, self.node.launch_height - self.node.offset)
             pt8 = Point(0, 0, self.node.launch_height - self.node.offset)

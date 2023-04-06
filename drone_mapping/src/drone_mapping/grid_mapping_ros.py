@@ -38,7 +38,9 @@ class GridMappingROS:
         self.map_msg.info.origin.position.x = self.map_center_x
         self.map_msg.info.origin.position.y = self.map_center_y
 
-        self.point_cloud_sub = rospy.Subscriber("green_mask_point_cloud", PointCloud2, self.green_obs_callback, queue_size=2)
+        self.point_cloud_green_sub = rospy.Subscriber("green_mask_point_cloud", PointCloud2, self.green_obs_callback, queue_size=1)
+        self.point_cloud_red_sub = rospy.Subscriber("red_mask_point_cloud", PointCloud2, self.red_obs_callback,
+                                                queue_size=1)
         self.map_pub = rospy.Publisher('map', OccupancyGrid, queue_size=2)
         self.tf_sub = tf.TransformListener()
         self.r = rospy.Rate(20)
@@ -98,6 +100,32 @@ class GridMappingROS:
             # if ((x - self.prev_robot_x) ** 2 + (y - self.prev_robot_y) ** 2 >= self.update_movement ** 2):
             # print(xyz_array, msg)
             gridmap = self.gridmapping.update( xyz_array).flatten()  # update map
+            # self.prev_robot_x = x
+            # self.prev_robot_y = y
+
+            # publish map (with the specified frequency)
+            if self.map_last_publish.to_sec() + 1.0 / self.map_publish_freq < rospy.Time.now().to_sec():
+                self.map_last_publish = rospy.Time.now()
+                self.publish_occupancygrid(gridmap, msg.header.stamp)
+
+        except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException) as e:
+            rospy.logerr(e)
+
+    def red_obs_callback(self, msg):
+        if not self.is_gridmapping_initialized:
+            self.init_gridmapping()
+
+        try:
+            # self.tf_sub.waitForTransform(self.map_frame, self.robot_frame, msg.header.stamp, rospy.Duration(1.0))
+            # # get the robot position associated with the current laserscan
+            # (x, y, _), (qx, qy, qz, qw) = self.tf_sub.lookupTransform(self.map_frame, self.robot_frame,
+            #                                                           msg.header.stamp)
+            # theta = self.quarternion_to_yaw(qx, qy, qz, qw)
+            xyz_array = ros_numpy.point_cloud2.pointcloud2_to_xyz_array(msg)
+            # check the movement if update is needed
+            # if ((x - self.prev_robot_x) ** 2 + (y - self.prev_robot_y) ** 2 >= self.update_movement ** 2):
+            # print(xyz_array, msg)
+            gridmap = self.gridmapping.update(xyz_array).flatten()  # update map
             # self.prev_robot_x = x
             # self.prev_robot_y = y
 

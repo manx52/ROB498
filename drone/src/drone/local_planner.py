@@ -37,14 +37,14 @@ class LocalPlanner:
 
         if self.yawing == 1:  # Right
             theta = calc_yaw(curr_pose.pose.orientation)
-            yaw = (theta_d + 0.523599)  # % (2 * np.pi)1.5708
+            yaw = (theta_d + self.rotate_angle)  # % (2 * np.pi)1.5708
             head_error = yaw - theta
             head_err_norm = math.atan2(math.sin(head_error), math.cos(head_error))
 
             rospy.loginfo_throttle(1, "yaw == 1")
         elif self.yawing == 2:  # Left
             theta = calc_yaw(curr_pose.pose.orientation)
-            yaw = (theta_d - 0.523599)  # % (2 * np.pi) #0.523599
+            yaw = (theta_d - self.rotate_angle)  # % (2 * np.pi) #0.523599
             head_error = yaw - theta
             head_err_norm = math.atan2(math.sin(head_error), math.cos(head_error))
 
@@ -109,6 +109,8 @@ class LocalPlanner:
                 self.node.waypoints.poses[self.node.waypoint_index], self.node.drone_pose)
 
             yaw, heading_error_norm = self.rotating(theta_d, heading_error_norm, curr_pose)
+            # msg = "YAW: " + str(yaw)
+            # rospy.loginfo_throttle(1, msg)
             q = quaternion_from_euler(0, 0, yaw)
 
             # While holding position rotate to direction of new point

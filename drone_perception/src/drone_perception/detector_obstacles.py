@@ -55,7 +55,7 @@ class DetectorObstacles(Detector):
         self.publish_point_cloud = False
 
         self.add_obs = False
-        self.add_obs_sub = rospy.Subscriber("add_obs", Bool,self.add_obs_callback)
+        self.add_obs_sub = rospy.Subscriber("add_obs", Bool, self.add_obs_callback)
         # Initialize random number generator seed
         cv2.setRNGSeed(12345)
 
@@ -109,7 +109,7 @@ class DetectorObstacles(Detector):
         self.point_cloud_processing(image, img.header, green_only, self.green_mask_publisher,
                                     self.green_mask_point_cloud_publisher)
         self.point_cloud_processing(image, img.header, red_only, self.red_mask_publisher,
-                                    self.green_mask_point_cloud_publisher)
+                                    self.red_mask_point_cloud_publisher)
 
         # Publish bounding box image message if there are subscribers
         if self.bounding_box_publisher.get_num_connections() > 0:
@@ -139,6 +139,12 @@ class DetectorObstacles(Detector):
             x, y, w, h = cv2.boundingRect(region)
             boundingBoxes = [[x, y + h], [x + w, y]]
 
+            # remove edge cases
+            x_left_cond = x == 0 or x == self.camera.resolution_x
+            x_right_cond = (x + w) == 0 or (x + w) == self.camera.resolution_x
+            if x_left_cond or x_right_cond:
+                continue
+
             # Draw bounding box on the input image
             cv2.rectangle(image, (x, y), (x + w, y + h), (0, 0, 255), 2)
             box.append(self.camera.calculateBallFromBoundingBoxes(0.3, boundingBoxes))
@@ -162,7 +168,9 @@ class DetectorObstacles(Detector):
             for pt in box:
 
                 # Exclude points too far away
-                if pt.norm_squared < self.point_cloud_max_distance ** 2:  # TODO remove lines behind
+                pt_drone_frame = pt.position - self.camera.pose.position
+                pt_transform = Transformation(position=pt_drone_frame)
+                if pt_transform.norm_squared < self.point_cloud_max_distance ** 2:  # TODO remove lines behind
                     points3d.append(pt.position)
             # print("How many", len(points3d))
             if len(points3d) > 0:

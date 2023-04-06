@@ -21,6 +21,9 @@ class TestCommon(TestCase):
         vicon_position = [1,0,1]
         vicon_transform = Transformation(vicon_position, vicon_quaternion)
 
+        vicon_position2 = [-1, -1, 1]
+        vicon_transform2 = Transformation(vicon_position2)
+        print(vicon_transform2.position - vicon_transform.position)
         transformed_position = vicon_transform.rotation_matrix @ vicon_transform.position
         #assert np.all(transformed_position == np.array([1, -1.00000367, 0.99999633]))
         print(transformed_position)
