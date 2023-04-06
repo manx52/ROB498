@@ -50,12 +50,22 @@ class DetectorObstacles(Detector):
         self.tf_broadcaster = TransformBroadcaster()
 
         # Initialize point cloud parameters and publishing flag
-        self.point_cloud_max_distance = rospy.get_param("point_cloud_max_distance", 15)
+        self.point_cloud_max_distance = rospy.get_param("point_cloud_max_distance", 5)
         self.point_cloud_spacing = rospy.get_param("point_cloud_spacing", 30)
         self.publish_point_cloud = False
 
+        self.add_obs = False
+        self.add_obs_sub = rospy.Subscriber("add_obs", Bool,self.add_obs_callback)
         # Initialize random number generator seed
         cv2.setRNGSeed(12345)
+
+    def add_obs_callback(self, msg):
+        """
+
+        :param msg:
+        :return:
+        """
+        self.add_obs = msg.data
 
     def image_callback(self, img: Image, debug=False):
         """
@@ -99,7 +109,7 @@ class DetectorObstacles(Detector):
         self.point_cloud_processing(image, img.header, green_only, self.green_mask_publisher,
                                     self.green_mask_point_cloud_publisher)
         self.point_cloud_processing(image, img.header, red_only, self.red_mask_publisher,
-                                    self.red_mask_point_cloud_publisher)
+                                    self.green_mask_point_cloud_publisher)
 
         # Publish bounding box image message if there are subscribers
         if self.bounding_box_publisher.get_num_connections() > 0:
@@ -146,7 +156,7 @@ class DetectorObstacles(Detector):
             image_publisher.publish(img_out)
 
         # Create point cloud message and publish it if there is any subscriber
-        if self.publish_point_cloud and point_cloud_publisher.get_num_connections() > 0:
+        if self.publish_point_cloud and point_cloud_publisher.get_num_connections() > 0 and self.add_obs:
             points3d = []
 
             for pt in box:
@@ -154,13 +164,14 @@ class DetectorObstacles(Detector):
                 # Exclude points too far away
                 if pt.norm_squared < self.point_cloud_max_distance ** 2:  # TODO remove lines behind
                     points3d.append(pt.position)
-
-            # Publish point cloud message
-            header = Header()
-            header.stamp = img_header.stamp
-            header.frame_id = "map"
-            point_cloud_msg = pcl2.create_cloud_xyz32(header, points3d)
-            point_cloud_publisher.publish(point_cloud_msg)
+            # print("How many", len(points3d))
+            if len(points3d) > 0:
+                # Publish point cloud message
+                header = Header()
+                header.stamp = img_header.stamp
+                header.frame_id = "map"
+                point_cloud_msg = pcl2.create_cloud_xyz32(header, points3d)
+                point_cloud_publisher.publish(point_cloud_msg)
 
 
 if __name__ == "__main__":

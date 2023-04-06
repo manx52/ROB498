@@ -40,7 +40,7 @@ class GridMapping:
     def is_inside(self, i, j):
         return 0 <= i < self.gridmap.shape[0] < self.gridmap.shape[1] and j >= 0
 
-    def update(self, x, y, theta, pts):
+    def update(self, pts):
         # test by printing robot trajectory
         rr = []
         cc = []

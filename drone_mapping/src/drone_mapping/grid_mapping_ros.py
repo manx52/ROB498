@@ -19,15 +19,15 @@ class GridMappingROS:
         self.prev_robot_x = -99999999
         self.prev_robot_y = -99999999
 
-        self.robot_frame = rospy.get_param('/robot_frame', 'base_link')
-        self.map_frame = rospy.get_param('/map_frame', 'map')
-        self.map_center_x = rospy.get_param('/map_center_x', -5)
-        self.map_center_y = rospy.get_param('/map_center_y', -5)
-        self.map_size_x = rospy.get_param('/map_size_x', 10.0)
-        self.map_size_y = rospy.get_param('/map_size_y', 10.0)
-        self.map_resolution = rospy.get_param('/map_resolution', 0.1)
-        self.map_publish_freq = rospy.get_param('/map_publish_freq', 1.0)
-        self.update_movement = rospy.get_param('/update_movement', 0.1)
+        self.robot_frame = rospy.get_param('/drone_mapping/robot_frame', 'base_link')
+        self.map_frame = rospy.get_param('/drone_mapping/map_frame', 'map')
+        self.map_center_x = rospy.get_param('/drone_mapping/map_center_x', -5)
+        self.map_center_y = rospy.get_param('/drone_mapping/map_center_y', -5)
+        self.map_size_x = rospy.get_param('/drone_mapping/map_size_x', 10.0)
+        self.map_size_y = rospy.get_param('/drone_mapping/map_size_y', 10.0)
+        self.map_resolution = rospy.get_param('/drone_mapping/map_resolution', 0.1)
+        self.map_publish_freq = rospy.get_param('/drone_mapping/map_publish_freq', 1.0)
+        self.update_movement = rospy.get_param('/drone_mapping/update_movement', 0.1)
 
         # Creata a OccupancyGrid message template
         self.map_msg = OccupancyGrid()
@@ -38,7 +38,7 @@ class GridMappingROS:
         self.map_msg.info.origin.position.x = self.map_center_x
         self.map_msg.info.origin.position.y = self.map_center_y
 
-        self.laser_sub = rospy.Subscriber("green_mask_point_cloud", PointCloud2, self.green_obs_callback, queue_size=2)
+        self.point_cloud_sub = rospy.Subscriber("green_mask_point_cloud", PointCloud2, self.green_obs_callback, queue_size=2)
         self.map_pub = rospy.Publisher('map', OccupancyGrid, queue_size=2)
         self.tf_sub = tf.TransformListener()
         self.r = rospy.Rate(20)
@@ -88,18 +88,18 @@ class GridMappingROS:
             self.init_gridmapping()
 
         try:
-            self.tf_sub.waitForTransform(self.map_frame, self.robot_frame, msg.header.stamp, rospy.Duration(1.0))
-            # get the robot position associated with the current laserscan
-            (x, y, _), (qx, qy, qz, qw) = self.tf_sub.lookupTransform(self.map_frame, self.robot_frame,
-                                                                      msg.header.stamp)
-            theta = self.quarternion_to_yaw(qx, qy, qz, qw)
+            # self.tf_sub.waitForTransform(self.map_frame, self.robot_frame, msg.header.stamp, rospy.Duration(1.0))
+            # # get the robot position associated with the current laserscan
+            # (x, y, _), (qx, qy, qz, qw) = self.tf_sub.lookupTransform(self.map_frame, self.robot_frame,
+            #                                                           msg.header.stamp)
+            # theta = self.quarternion_to_yaw(qx, qy, qz, qw)
             xyz_array = ros_numpy.point_cloud2.pointcloud2_to_xyz_array(msg)
             # check the movement if update is needed
             # if ((x - self.prev_robot_x) ** 2 + (y - self.prev_robot_y) ** 2 >= self.update_movement ** 2):
-
-            gridmap = self.gridmapping.update(x, y, theta, xyz_array).flatten()  # update map
-            self.prev_robot_x = x
-            self.prev_robot_y = y
+            # print(xyz_array, msg)
+            gridmap = self.gridmapping.update( xyz_array).flatten()  # update map
+            # self.prev_robot_x = x
+            # self.prev_robot_y = y
 
             # publish map (with the specified frequency)
             if self.map_last_publish.to_sec() + 1.0 / self.map_publish_freq < rospy.Time.now().to_sec():

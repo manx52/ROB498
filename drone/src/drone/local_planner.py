@@ -3,6 +3,7 @@ from typing import Tuple, Any
 import rosparam
 import rospy
 from geometry_msgs.msg import Twist, PoseStamped
+from std_msgs.msg import Bool
 from tf.transformations import euler_from_quaternion
 from visualization_msgs.msg import MarkerArray
 
@@ -18,6 +19,8 @@ class LocalPlanner:
         self.node = node
         self.yawing = 0
         self.rotate_angle = rosparam.get_param("/rotate_angle")
+
+        self.add_obs_pub = rospy.Publisher("add_obs", Bool, queue_size=1)
 
     def rotating(self, theta_d: float, heading_error_norm: float, curr_pose: PoseStamped) -> Tuple[float, float]:
         """
@@ -140,9 +143,17 @@ class LocalPlanner:
                         break
                     pose_goal.pose.position = curr_pose.pose.position
                     pose_goal.pose.orientation = curr_pose.pose.orientation
+                    if i == 15:
+                        msg = Bool()
+                        msg.data = True
+                        self.add_obs_pub.publish(msg)
 
                     self.node.local_pos_pub.publish(pose_goal)
                     self.node.r.sleep()
+
+                msg = Bool()
+                msg.data = False
+                self.add_obs_pub.publish(msg)
                 self.yawing += 1
         else:
             # If boolean test is False or waypoints have not been received
