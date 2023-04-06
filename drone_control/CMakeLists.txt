@@ -27,7 +27,7 @@ catkin_package(DEPENDS
     INCLUDE_DIRS
     LIBRARIES)
 
-catkin_install_python(PROGRAMS src/rob498_drone_07/main.py
+catkin_install_python(PROGRAMS src/drone_control/main.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
