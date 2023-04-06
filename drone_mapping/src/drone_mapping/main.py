@@ -9,7 +9,7 @@ if __name__ == "__main__":
 
     # Create a new instance of the DroneComm class
     gm = GridMappingROS()
-    while not rospy.is_shutdown():
-        gm.run()
-        rospy.spin()
+
+    gm.run()
+
 
