@@ -9,3 +9,4 @@ venv/
 external/Dockerfile
 external/.dockerignore
 external/px4-sitl-docker
+docs/*
