@@ -2,16 +2,23 @@
 import numpy as np
 import ros_numpy
 import rospy
-import time
-from sensor_msgs.msg import LaserScan, PointCloud2
-from nav_msgs.msg import OccupancyGrid
 import tf
+from nav_msgs.msg import OccupancyGrid
+from sensor_msgs.msg import PointCloud2
 
-from drone_mapping.grid_mapping import GridMapping, l2p
+from drone_mapping.grid_mapping import GridMapping
+from drone_mapping.utils import l2p
 
 
 class GridMappingROS:
-    def __init__(self):
+    """
+
+    """
+
+    def __init__(self) -> None:
+        """
+
+        """
         self.gridmapping = None
         rospy.init_node('RosGridMapping', anonymous=True)
         self.is_gridmapping_initialized = False
@@ -38,32 +45,36 @@ class GridMappingROS:
         self.map_msg.info.origin.position.x = self.map_center_x
         self.map_msg.info.origin.position.y = self.map_center_y
 
-        self.point_cloud_green_sub = rospy.Subscriber("green_mask_point_cloud", PointCloud2, self.green_obs_callback, queue_size=1)
+        self.point_cloud_green_sub = rospy.Subscriber("green_mask_point_cloud", PointCloud2, self.green_obs_callback,
+                                                      queue_size=1)
         self.point_cloud_red_sub = rospy.Subscriber("red_mask_point_cloud", PointCloud2, self.red_obs_callback,
-                                                queue_size=1)
+                                                    queue_size=1)
         self.map_pub = rospy.Publisher('map', OccupancyGrid, queue_size=2)
         self.tf_sub = tf.TransformListener()
         self.r = rospy.Rate(20)
 
-    def init_gridmapping(self):
+    def init_gridmapping(self) -> None:
+        """
+
+        :return:
+        """
         self.gridmapping = GridMapping(self.map_center_x, self.map_center_y, self.map_size_x, self.map_size_y,
                                        self.map_resolution)
         self.is_gridmapping_initialized = True
 
-    # https://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles#Quaternion_to_Euler_angles_conversion
-    def quarternion_to_yaw(self, qx, qy, qz, qw):
-        siny_cosp = 2 * (qw * qz + qx * qy)
-        cosy_cosp = 1 - 2 * (qy * qy + qz * qz)
-        return np.arctan2(siny_cosp, cosy_cosp)
+    def publish_occupancygrid(self, gridmap: np.ndarray, stamp) -> None:
+        """
+        Convert gridmap to ROS supported data type : int8[]
+        https://docs.ros.org/en/melodic/api/nav_msgs/html/msg/OccupancyGrid.html The map data, in row-major order,
+        starting with (0,0).  Occupancy probabilities are in the range [0,100].  Unknown is -1.
 
-    def publish_occupancygrid(self, gridmap, stamp):
-        # Convert gridmap to ROS supported data type : int8[]
-        # http://docs.ros.org/en/melodic/api/nav_msgs/html/msg/OccupancyGrid.html
-        # The map data, in row-major order, starting with (0,0).  Occupancy probabilities are in the range [0,100].  Unknown is -1.
+        :param gridmap:
+        :param stamp:
+        :return:
+        """
+
         gridmap_p = l2p(gridmap)
-        # unknown_mask = (gridmap_p == self.sensor_model_p_prior)  # for setting unknown cells to -1
         gridmap_int8 = (gridmap_p * 100).astype(dtype=np.int8)
-        # gridmap_int8[unknown_mask] = -1  # for setting unknown cells to -1
 
         # Publish map
         self.map_msg.data = gridmap_int8
@@ -71,8 +82,11 @@ class GridMappingROS:
         self.map_pub.publish(self.map_msg)
         rospy.loginfo_once("Published map!")
 
-    def run(self):
+    def run(self) -> None:
+        """
 
+        :return:
+        """
         while not rospy.is_shutdown():
             if not self.is_gridmapping_initialized:
                 self.init_gridmapping()
@@ -85,7 +99,12 @@ class GridMappingROS:
 
             self.r.sleep()
 
-    def green_obs_callback(self, msg):
+    def green_obs_callback(self, msg: PointCloud2) -> None:
+        """
+
+        :param msg:
+        :return:
+        """
         if not self.is_gridmapping_initialized:
             self.init_gridmapping()
 
@@ -99,7 +118,7 @@ class GridMappingROS:
             # check the movement if update is needed
             # if ((x - self.prev_robot_x) ** 2 + (y - self.prev_robot_y) ** 2 >= self.update_movement ** 2):
             # print(xyz_array, msg)
-            gridmap = self.gridmapping.update( xyz_array).flatten()  # update map
+            gridmap = self.gridmapping.update(xyz_array).flatten()  # update map
             # self.prev_robot_x = x
             # self.prev_robot_y = y
 
@@ -111,7 +130,12 @@ class GridMappingROS:
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException) as e:
             rospy.logerr(e)
 
-    def red_obs_callback(self, msg):
+    def red_obs_callback(self, msg: PointCloud2) -> None:
+        """
+
+        :param msg:
+        :return:
+        """
         if not self.is_gridmapping_initialized:
             self.init_gridmapping()
 

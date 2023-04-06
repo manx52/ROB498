@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-import numpy as np
 import rospy
+
 from drone_mapping.grid_mapping_ros import GridMappingROS
 
 if __name__ == "__main__":
@@ -9,7 +9,6 @@ if __name__ == "__main__":
 
     # Create a new instance of the DroneComm class
     gm = GridMappingROS()
-
     gm.run()
 
 

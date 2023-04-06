@@ -6,5 +6,7 @@ Code API
     :toctree: generated
     :template: custom-module-template.rst
 
-    drone
+    drone_common
+    drone_control
     drone_perception
+    drone_mapping

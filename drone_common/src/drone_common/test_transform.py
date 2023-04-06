@@ -1,11 +1,7 @@
 from unittest import TestCase
 
 import numpy as np
-import rospy
-from sensor_msgs.msg import CameraInfo
-
-from drone_perception.camera import Camera
-from drone_perception.transformation import Transformation
+from drone_common.transformation import Transformation
 
 
 class TestCommon(TestCase):

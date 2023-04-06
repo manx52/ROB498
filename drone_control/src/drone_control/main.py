@@ -2,7 +2,7 @@
 import numpy as np
 import rospy
 
-from drone.drone_comm import DroneComm
+from drone_control.drone_comm import DroneComm
 
 np.set_printoptions(precision=3)
 

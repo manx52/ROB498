@@ -1,21 +1,16 @@
 #!/usr/bin/env python3
-import os
 import time
 
-from rospy.impl.tcpros_base import DEFAULT_BUFF_SIZE
-from tf import TransformBroadcaster
-
-from drone_perception.transformation import Transformation
-
 import cv2
-import numpy as np
 import rospy
 import sensor_msgs.point_cloud2 as pcl2
 from cv_bridge import CvBridge
-from geometry_msgs.msg import PoseWithCovarianceStamped
+from rospy.impl.tcpros_base import DEFAULT_BUFF_SIZE
 from sensor_msgs.msg import Image, PointCloud2
 from std_msgs.msg import Bool, Header
+from tf import TransformBroadcaster
 
+from drone_common.transformation import Transformation
 from drone_perception.detector import Detector
 
 
@@ -182,7 +177,4 @@ class DetectorObstacles(Detector):
                 point_cloud_publisher.publish(point_cloud_msg)
 
 
-if __name__ == "__main__":
-    rospy.init_node("detector_obstacles")
-    obstacle_detector = DetectorObstacles()
-    rospy.spin()
+

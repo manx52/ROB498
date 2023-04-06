@@ -9,52 +9,38 @@
     <env name="ROSCONSOLE_FORMAT" value="[${severity}] [${time: %r}] [${node} ${function} ${line}]: ${message}" />
     <env name="ROSCONSOLE_CONFIG_FILE" value="$(find drone)/config/rosconsole.conf" />
 
-<!--    <param name="robot_description" command="xacro '/home/drone/catkin_ws/src/ROB498/external/drone_description/urdf/iris.xacro'-->
-<!--        namespace:='drone'-->
-<!--        file_path:=package://drone_description-->
 
-<!--        "-->
-<!--    />-->
-<!--    <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />-->
-<!--    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher"/>-->
-<!--      &lt;!&ndash; Launch static transform publishers &ndash;&gt;-->
+    <!-- Real Drone-->
+    <include file="$(find drone)/launch/bridge_mavros.launch" unless="$(arg simulation)"/>
 
-<!--    <node pkg="tf" type="static_transform_publisher" name="tf_base_link"-->
-<!--        args="0 0 0 0 0 0 1 base_link_frd drone/base_link 1000"/>-->
-<!--    <node pkg="tf" type="static_transform_publisher" name="tf_map"-->
-<!--        args="0 0 0 0 0 0 1 map_ned odom  1000"/>-->
-<!--    <node pkg="tf" type="static_transform_publisher" name="tf_odom"-->
-<!--        args="0 0 0 0 0 0 1 odom_ned base_link  1000"/>-->
-
-    <rosparam command="load" file="$(find drone)/config/config.yaml" />
+    <!-- Drone Control -->
+    <node pkg="drone_control" type="main.py" name="rob498_drone_07" required="true" output="screen" >
+        <rosparam file="$(find drone_control)/config/config.yaml" command="load" />
+    </node>
 
     <!-- Obstacle Detection -->
-    <node pkg="drone_perception" type="detector_obstacles.py" name="detector_obstacles" output="screen">
+    <node pkg="drone_perception" type="main.py" name="detector_obstacles" output="screen">
         <rosparam file="$(find drone_perception)/config/config.yaml" command="load" />
     </node>
 
-    <!-- Drone Control -->
-    <node pkg="drone" type="main.py" name="rob498_drone_07" required="true" output="screen" >
+    <!-- Mapping Node-->
+    <node pkg="drone_mapping" type="main.py" name="drone_mapping" output="screen">
+        <rosparam file="$(find drone_mapping)/config/config.yaml" command="load" />
     </node>
 
     <group unless="$(arg docker)">
 
+        <!-- Gui-->
         <include file="$(find drone)/launch/gui.launch" />
 
+        <!-- Simulation-->
         <include file="$(find drone)/launch/mavros_posix_sitl.launch" if="$(arg simulation)" >
             <arg name="challenge4" value="$(arg challenge4)" />
         </include>
 
     </group>
 
-    <!-- Real Drone-->
-    <include file="$(find drone)/launch/bridge_mavros.launch" unless="$(arg simulation)">
 
-    </include>
-
-    <node name="drone_mapping" pkg="drone_mapping" type="main.py" output="screen">
-        <rosparam file="$(find drone_mapping)/config/config.yaml" command="load" />
-        </node>
 
 
 </launch>

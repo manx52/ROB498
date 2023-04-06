@@ -1,5 +1,4 @@
 import cv2
-import rospy
 import tf
 
 from drone_perception.camera import Camera

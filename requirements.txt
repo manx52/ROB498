@@ -34,3 +34,5 @@ gitpython
 psutil==5.9.2; platform_machine == 'x86_64'
 torch==1.13.0+cu117; platform_machine == 'x86_64'
 torchvision==0.14.0+cu117; platform_machine == 'x86_64'
+
+scikit-image~=0.16.2

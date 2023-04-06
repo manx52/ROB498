@@ -5,7 +5,7 @@ from typing import Tuple
 import numpy as np
 import rospy
 from geometry_msgs.msg import Quaternion, Pose, PoseStamped
-from tf.transformations import quaternion_from_euler, euler_from_quaternion
+from tf.transformations import euler_from_quaternion
 from visualization_msgs.msg import Marker
 
 """

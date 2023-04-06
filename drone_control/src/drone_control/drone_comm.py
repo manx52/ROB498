@@ -5,11 +5,11 @@ from mavros_msgs.srv import CommandBoolRequest, SetModeRequest
 from nav_msgs.msg import Path
 from visualization_msgs.msg import MarkerArray
 import tf
-from drone.services import Services
-from drone.utils import *
-from drone.vicon import Vicon
-from drone_perception import Transformation
-from drone.local_planner import LocalPlanner
+from drone_control.services import Services
+from drone_control.utils import *
+from drone_control.vicon import Vicon
+from drone_common.transformation import Transformation
+from drone_control.local_planner import LocalPlanner
 
 
 class DroneComm:
@@ -23,17 +23,17 @@ class DroneComm:
         """
 
         # Initialize node
-        node_name = rospy.get_param("/node_name")
+        node_name = rospy.get_param("/rob498_drone_07/node_name")
         rospy.init_node(node_name)
 
         # Get settings from ROS parameter server
-        self.offset = rospy.get_param("/offset")
-        self.land_offset = rospy.get_param("/land_offset")
-        self.launch_height = rospy.get_param("/launch_height")
-        self.vis = rospy.get_param("/vis")
+        self.offset = rospy.get_param("/rob498_drone_07/offset")
+        self.land_offset = rospy.get_param("/rob498_drone_07/land_offset")
+        self.launch_height = rospy.get_param("/rob498_drone_07/launch_height")
+        self.vis = rospy.get_param("/rob498_drone_07/vis")
         self.sim = rospy.get_param("/simulation")
-        self.r = rospy.Rate(rospy.get_param("/rate"))
-        self.error_tol = rospy.get_param("/error_tol")
+        self.r = rospy.Rate(rospy.get_param("/rob498_drone_07/rate"))
+        self.error_tol = rospy.get_param("/rob498_drone_07/error_tol")
 
         # Create submodules
         self.vicon = Vicon(self)

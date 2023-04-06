@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
-import rospy
 from geometry_msgs.msg import PoseArray, Point, TransformStamped
 from mavros_msgs.srv import CommandBool, SetMode
 from std_msgs.msg import Int8
 from std_srvs.srv import Empty, EmptyResponse
 
-from drone.utils import *
+from drone_control.utils import *
 
 
 class Services:
@@ -31,7 +30,7 @@ class Services:
         self.bool_land = False
         self.bool_abort = False
 
-        self.unlimited_test = rospy.get_param("/unlimited_waypts")
+        self.unlimited_test = rospy.get_param("/rob498_drone_07/unlimited_waypts")
 
         # Services
         self.srv_launch = rospy.Service(node_name + '/comm/launch', Empty, self.callback_launch)

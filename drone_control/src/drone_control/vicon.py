@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 from geometry_msgs.msg import TransformStamped
-import rospy
-from drone.utils import *
-from drone_perception import Transformation
+
+from drone_control.utils import *
+from drone_common.transformation import Transformation
 
 
 class Vicon:
@@ -17,7 +17,7 @@ class Vicon:
         """
         self.node = node
 
-        self.vicon_pose_enabled = rospy.get_param("/vicon_enabled")  # Check if Vicon data is enabled.
+        self.vicon_pose_enabled = rospy.get_param("/rob498_drone_07/vicon_enabled")  # Check if Vicon data is enabled.
         self.VICON_RECEIVED = False  # Flag to indicate if Vicon data has been received.
         self.vicon_transform = None  # Placeholder for Vicon transformation object.
 

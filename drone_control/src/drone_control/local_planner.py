@@ -1,13 +1,9 @@
-from typing import Tuple, Any
-
 import rosparam
-import rospy
-from geometry_msgs.msg import Twist, PoseStamped
 from std_msgs.msg import Bool
-from tf.transformations import euler_from_quaternion
+from tf.transformations import quaternion_from_euler
 from visualization_msgs.msg import MarkerArray
 
-from drone.utils import *
+from drone_control.utils import *
 
 
 class LocalPlanner:
@@ -18,7 +14,7 @@ class LocalPlanner:
         """
         self.node = node
         self.yawing = 0
-        self.rotate_angle = rosparam.get_param("/rotate_angle")
+        self.rotate_angle = rosparam.get_param("/rob498_drone_07/rotate_angle")
 
         self.add_obs_pub = rospy.Publisher("add_obs", Bool, queue_size=1)
 

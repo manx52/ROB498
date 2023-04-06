@@ -5,19 +5,12 @@ find_package(
     catkin
     REQUIRED
     COMPONENTS
-    rospy
-    roscpp
-    dynamic_reconfigure
-      tf
-      pcl_ros
-      mavros
-      mavros_extras
-      mavros_msgs
-      mavlink
       gazebo_ros
       gazebo_msgs
       drone_description
       drone_mapping
+      drone_control
+      drone_common
       px4_realsense_bridge
       drone_perception
       drone_msgs
@@ -34,8 +27,4 @@ catkin_package(DEPENDS
     INCLUDE_DIRS
     LIBRARIES)
 
-catkin_install_python(PROGRAMS src/drone/main.py
-  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
 
-catkin_python_setup()
