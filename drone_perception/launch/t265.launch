@@ -14,12 +14,27 @@
       <arg name="publish_odom_tf"          value="false"/>
   </include>
 
-     <node pkg="drone_perception" type="t265_stereo.py" name="synchronized_listener" output="screen">
-    </node>
+<!--     <node pkg="drone_perception" type="t265_stereo.py" name="synchronized_listener" output="screen">-->
+<!--    </node>-->
 
      <node pkg="drone_perception" type="main.py" name="detector_obstacles" output="screen">
         <rosparam file="$(find drone_perception)/config/config.yaml" command="load" />
     </node>
+    <!-- Start a nodelet manager; the name must be unqualified here -->
+  <node pkg="nodelet" type="nodelet" name="pipeline" args="manager" />
+<!--    <remap from="/camera/fisheye1/image_color" to="stereo/left/image_raw" />-->
+<!--     <remap from="/camera/fisheye2/image_color" to="stereo/right/image_raw" />-->
+  <!-- Include the stereo_image_proc.launch file and pass in a qualified manager name -->
+  <include file="$(find stereo_image_proc)/launch/stereo_image_proc.launch" ns="stereo">
+    <arg name="manager" value="/pipeline" />
+  </include>
+
+<!--     <node pkg="stereo_image_proc" type="stereo_image_proc" name="stereo_image_proc" output="screen" >-->
+<!--         <remap from="/camera/fisheye1/image_raw" to="stereo/left/image_raw" />-->
+<!--         <remap from="/camera/fisheye2/image_raw" to="stereo/right/image_raw" />-->
+<!--         <remap from="/camera/fisheye1/camera_info" to="stereo/left/camera_info" />-->
+<!--         <remap from="/camera/fisheye2/camera_info" to="stereo/right/camera_info" />-->
+<!--     </node>-->
     <arg name="rvizconfig" default="$(find drone_perception)/rviz/t265.rviz" />
     <node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" output="screen" />
 

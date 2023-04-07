@@ -13,4 +13,10 @@
   <depend>cv_bridge</depend>
   <depend>sensor_msgs</depend>
 
+  <depend>jetson_camera</depend>
+  <depend>image_proc</depend>
+  <depend>stereo_image_proc</depend>
+  <depend>camera_calibration</depend>
+
+
 </package>

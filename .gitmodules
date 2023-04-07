@@ -4,3 +4,6 @@
 [submodule "external/mav_comm"]
 	path = external/mav_comm
 	url = git@github.com:PX4/mav_comm.git
+[submodule "external/jetson_camera"]
+	path = external/jetson_camera
+	url = git@github.com:manx52/jetson_camera.git

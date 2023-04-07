@@ -34,7 +34,6 @@
 
   <!-- Sensors -->
   <depend>realsense2_camera</depend>
-
   <depend>xterm</depend>
 
   <export>

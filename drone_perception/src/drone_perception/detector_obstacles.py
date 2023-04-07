@@ -23,6 +23,7 @@ class DetectorObstacles(Detector):
     def __init__(self):
         """
         Initializes the DetectorObstacles class.
+        Large buff size (https://answers.ros.org/question/220502/image-subscriber-lag-despite-queue-1/
 
         Args:
             None
@@ -35,20 +36,32 @@ class DetectorObstacles(Detector):
 
         # Initialize subscribers and publishers
         self.disparity = None
+        self.image_mono_subscriber1 = rospy.Subscriber(
+            "/camera/fisheye1/image_raw", Image, self.image_mono1_callback, queue_size=1,
+            buff_size=DEFAULT_BUFF_SIZE * 64
+        )
+        self.image_mono_subscriber2 = rospy.Subscriber(
+            "/camera/fisheye2/image_raw", Image, self.image_mono2_callback, queue_size=1,
+            buff_size=DEFAULT_BUFF_SIZE * 64
+        )
+
+        self.fish1_publisher = rospy.Publisher("/stereo/left/image_raw", Image, queue_size=1)
+        self.fish2_publisher = rospy.Publisher("/stereo/right/image_raw", Image, queue_size=1)
+
         self.image_mono_subscriber = rospy.Subscriber(
             rospy.get_param("/detector_obstacles/camera_topic_mono"), Image, self.image_mono_callback, queue_size=1,
             buff_size=DEFAULT_BUFF_SIZE * 64
-        )  # Large buff size (https://answers.ros.org/question/220502/image-subscriber-lag-despite-queue-1/
+        )
 
         self.image_t265_subscriber = rospy.Subscriber(
             rospy.get_param("/detector_obstacles/camera_topic_t265"), Image, self.image_t265_callback, queue_size=1,
             buff_size=DEFAULT_BUFF_SIZE * 64
-        )  # Large buff size (https://answers.ros.org/question/220502/image-subscriber-lag-despite-queue-1/
+        )
 
         self.image_disparity_subscriber = rospy.Subscriber(
             "camera/t265/disparity", Image, self.image_disparity_callback, queue_size=1,
             buff_size=DEFAULT_BUFF_SIZE * 64
-        )  # Large buff size (https://answers.ros.org/question/220502/image-subscriber-lag-despite-queue-1/)
+        )
 
         self.bounding_box_publisher = rospy.Publisher("camera/bounding_box", Image, queue_size=1)
         self.green_mask_publisher = rospy.Publisher("camera/green_mask", Image, queue_size=1)
@@ -62,10 +75,29 @@ class DetectorObstacles(Detector):
         self.point_cloud_spacing = rospy.get_param("point_cloud_spacing", 30)
         self.publish_point_cloud = False
 
-        self.add_obs = False
+        self.add_obs = rospy.get_param("/detector_obstacles/add_obs", False)
         self.add_obs_sub = rospy.Subscriber("add_obs", Bool, self.add_obs_callback)
+
         # Initialize random number generator seed
         cv2.setRNGSeed(12345)
+
+    def image_mono1_callback(self, img):
+        # Transform to cv2/numpy image
+        image = CvBridge().imgmsg_to_cv2(img, desired_encoding="mono8")
+        image = cv2.cvtColor(src=image, code=cv2.COLOR_GRAY2BGR)
+        img_out = CvBridge().cv2_to_imgmsg(image, encoding="bgr8")
+        img_out.header = img.header
+
+        self.fish1_publisher.publish(img_out)
+
+    def image_mono2_callback(self, img):
+        # Transform to cv2/numpy image
+        image = CvBridge().imgmsg_to_cv2(img, desired_encoding="mono8")
+        image = cv2.cvtColor(src=image, code=cv2.COLOR_GRAY2BGR)
+        img_out = CvBridge().cv2_to_imgmsg(image, encoding="bgr8")
+        img_out.header = img.header
+
+        self.fish2_publisher.publish(img_out)
 
     def add_obs_callback(self, msg):
         """
@@ -155,7 +187,6 @@ class DetectorObstacles(Detector):
         image_crop_blurred = cv2.bilateralFilter(image, 9, 75, 75)
         img_grey = cv2.cvtColor(image_crop_blurred, cv2.COLOR_BGR2GRAY)
         # Convert the image to HSV color space for better color segmentation
-        # hsv = cv2.cvtColor(src=image_crop_blurred, code=cv2.COLOR_BGR2HSV)
 
         # Show debug images if debug flag is True
         if debug:
@@ -164,15 +195,14 @@ class DetectorObstacles(Detector):
             cv2.waitKey(0)
 
         # Create masks for green and red obstacles in the image
-        # green_only = cv2.inRange(hsv, (0, 0, 0), (180, 255, 30)) #(0, 0, 0), (180, 255, 30)
-        # red_only = cv2.inRange(hsv, (100, 70, 50), (180, 255, 255))
         ret, green_only = cv2.threshold(img_grey, 100, 255, cv2.THRESH_BINARY)
         # green_only = cv2.adaptiveThreshold(img_grey, 127, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, \
         #                            cv2.THRESH_BINARY, 11, 2)
+
         # Publish point clouds and masks for green and red obstacles
         self.point_cloud_processing_real(image, img.header, green_only, self.green_mask_publisher,
-                                    self.green_mask_point_cloud_publisher)
-        # self.point_cloud_processing(image, img.header, red_only, self.red_mask_publisher,
+                                         self.green_mask_point_cloud_publisher)
+        # self.point_cloud_processing_real(image, img.header, red_only, self.red_mask_publisher,
         #                             self.red_mask_point_cloud_publisher)
 
         # Publish bounding box image message if there are subscribers
@@ -198,8 +228,6 @@ class DetectorObstacles(Detector):
         # Convert ROS image message to OpenCV image
         image = CvBridge().imgmsg_to_cv2(img, desired_encoding="32FC1")
         self.disparity = image
-        # # Apply bilateral filtering to reduce noise
-        # image_crop_blurred = cv2.bilateralFilter(image, 9, 75, 75)
 
     def point_cloud_processing(self, image, img_header, img, image_publisher, point_cloud_publisher):
         """

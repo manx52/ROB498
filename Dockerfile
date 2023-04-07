@@ -44,6 +44,9 @@ RUN apt-get update && apt-fast install -y --no-install-recommends \
     ros-noetic-mavros \
     ros-noetic-mavros-extras \
     ros-noetic-pcl-ros \
+    ros-noetic-image-proc \
+    ros-noetic-stereo-image-proc \
+    ros-noetic-camera-calibration \
     curl \
     libxkbcommon-x11-0 \
     libxcb-icccm4 \
