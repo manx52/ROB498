@@ -25,10 +25,10 @@ class GridMapping:
         self.map_size_x = map_size_x  # meter
         self.map_size_y = map_size_y  # meter
         self.map_resolution = map_resolution
-        map_rows = int(map_size_y / map_resolution)
-        map_cols = int(map_size_x / map_resolution)
+        self.map_rows = int(map_size_y / map_resolution)
+        self.map_cols = int(map_size_x / map_resolution)
 
-        self.gridmap = np.zeros((map_rows, map_cols))
+        self.gridmap = np.zeros((self.map_rows, self.map_cols))
         self.collision_radius_pix = 0.35 // self.map_resolution
 
     def to_xy(self, i: int, j: int) -> Tuple[float, float]:

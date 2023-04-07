@@ -1,10 +1,7 @@
 #!/usr/bin/env python3
-import numpy as np
 import rospy
 
 from drone_control.drone_comm import DroneComm
-
-np.set_printoptions(precision=3)
 
 if __name__ == "__main__":
     # Log an informative message to the ROS console

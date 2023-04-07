@@ -71,6 +71,7 @@ class DroneComm:
             self.vis_goal_pub = rospy.Publisher(node_name + '/comm/vis_goal', Marker, queue_size=1)
             self.vis_waypoints_pub = rospy.Publisher(node_name + '/comm/vis_waypoints', MarkerArray, queue_size=1)
             self.vis_path_pub = rospy.Publisher(node_name + '/comm/vis_path', Path, queue_size=1)
+            self.vis_traj_waypoints_pub = rospy.Publisher(node_name + '/comm/vis_traj_waypoints', MarkerArray, queue_size=1)
 
     # Callback Sensors
     def pose_callback(self, msg):

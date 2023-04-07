@@ -65,10 +65,11 @@ def waypoint_pose_error(goal_pose: Pose, curr_pose: PoseStamped, debug: bool = F
     return error_pos, theta_d, heading_error_norm
 
 
-def vis_marker(pose: Pose, r: float, g: float, b: float, action: int) -> Marker:
+def vis_marker(pose: Pose, r: float, g: float, b: float, action: int, scale: float = 0.125) -> Marker:
     """
     The function creates a new Marker object and sets its properties based on the input arguments. The marker is then returned.
 
+    :param scale:
     :param pose: a Pose message containing the position and orientation of the marker
     :param r: a float representing the red component of the marker's color (0.0 to 1.0)
     :param g: a float representing the green component of the marker's color (0.0 to 1.0)
@@ -91,9 +92,9 @@ def vis_marker(pose: Pose, r: float, g: float, b: float, action: int) -> Marker:
     marker.action = action
 
     # Set the scale of the marker
-    marker.scale.x = 0.125
-    marker.scale.y = 0.125
-    marker.scale.z = 0.125
+    marker.scale.x = scale
+    marker.scale.y = scale
+    marker.scale.z = scale
 
     # Set the alpha (transparency) of the marker to fully opaque
     marker.color.a = 1.0

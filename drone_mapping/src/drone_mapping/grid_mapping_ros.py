@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+import sys
+
 import numpy as np
 import ros_numpy
 import rospy
@@ -8,7 +10,7 @@ from sensor_msgs.msg import PointCloud2
 
 from drone_mapping.grid_mapping import GridMapping
 from drone_mapping.utils import l2p
-
+np.set_printoptions(threshold=sys.maxsize)
 
 class GridMappingROS:
     """
@@ -94,6 +96,9 @@ class GridMappingROS:
             # TODO is it needed ?
             elif self.map_last_publish.to_sec() + 1.0 / self.map_publish_freq < rospy.Time.now().to_sec():
                 self.map_last_publish = rospy.Time.now()
+                # temp = self.gridmapping.get_map()
+                # idx = np.where(temp == 100)
+                # print("Map: ", idx)
                 gridmap = self.gridmapping.get_map().flatten()
                 self.publish_occupancygrid(gridmap, rospy.Time.now())
 
