@@ -13,17 +13,17 @@ class TestCommon(TestCase):
     def test_vicon_transformation(self):
         # q = t.quaternion
         # [roll, pitch, yaw] = Transformation.get_euler_from_quaternion([q.w, q.x, q.y, q.z])
-        vicon_quaternion = Transformation.get_quaternion_from_euler([0, 0, 1.57])
-        vicon_position = [1,0,1]
+
+        vicon_quaternion = Transformation.get_quaternion_from_euler([0, 0, 1.5708])
+        vicon_position = [1,1,0]
         vicon_transform = Transformation(vicon_position, vicon_quaternion)
 
-        vicon_position2 = [-1, -1, 1]
-        vicon_transform2 = Transformation(vicon_position2)
-        print(vicon_transform2.position - vicon_transform.position)
         transformed_position = vicon_transform.rotation_matrix @ vicon_transform.position
+        transformed_position2 = vicon_transform.rotation_matrix.T @ transformed_position
         #assert np.all(transformed_position == np.array([1, -1.00000367, 0.99999633]))
         print(transformed_position)
-        print(vicon_transform.rotation_matrix)
+        print(transformed_position2)
+        #print(vicon_transform.rotation_matrix)
 
     # def test_calculate_bounding_boxes_from_ball(self):
     #     rospy.init_node("test")

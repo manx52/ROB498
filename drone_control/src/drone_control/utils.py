@@ -4,7 +4,7 @@ from typing import Tuple
 
 import numpy as np
 import rospy
-from geometry_msgs.msg import Quaternion, Pose, PoseStamped
+from geometry_msgs.msg import Quaternion, Pose, PoseStamped, Point
 from tf.transformations import euler_from_quaternion
 from visualization_msgs.msg import Marker
 
@@ -65,10 +65,13 @@ def waypoint_pose_error(goal_pose: Pose, curr_pose: PoseStamped, debug: bool = F
     return error_pos, theta_d, heading_error_norm
 
 
-def vis_marker(pose: Pose, r: float, g: float, b: float, action: int, scale: float = 0.125) -> Marker:
+def vis_marker(pose: Pose, r: float, g: float, b: float, action: int, scale: float = 0.125,
+               marker_type: int = 2 , a: float = 1.0) -> Marker:
     """
     The function creates a new Marker object and sets its properties based on the input arguments. The marker is then returned.
 
+    :param a:
+    :param marker_type:
     :param scale:
     :param pose: a Pose message containing the position and orientation of the marker
     :param r: a float representing the red component of the marker's color (0.0 to 1.0)
@@ -86,7 +89,7 @@ def vis_marker(pose: Pose, r: float, g: float, b: float, action: int, scale: flo
     marker.header.stamp = rospy.Time.now()
 
     # Set the type of marker to a sphere
-    marker.type = marker.SPHERE
+    marker.type = marker_type
 
     # Set the action to take with the marker (e.g. ADD, DELETE)
     marker.action = action
@@ -97,7 +100,7 @@ def vis_marker(pose: Pose, r: float, g: float, b: float, action: int, scale: flo
     marker.scale.z = scale
 
     # Set the alpha (transparency) of the marker to fully opaque
-    marker.color.a = 1.0
+    marker.color.a = a
 
     # Set the color of the marker based on the input arguments
     marker.color.r = r

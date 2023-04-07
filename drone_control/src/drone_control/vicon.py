@@ -40,7 +40,7 @@ class Vicon:
 
         # Extract roll, pitch, and yaw from Vicon quaternion.
         q = msg.transform.rotation
-        [roll, pitch, yaw] = Transformation.get_euler_from_quaternion([q.w, q.x, q.y, q.z])
+        [roll, pitch, yaw] = Transformation.get_euler_from_quaternion([q.x, q.y, q.z, q.w])
 
         # Create a Vicon quaternion from the Euler angles. Removing roll and pitch
         vicon_quaternion = Transformation.get_quaternion_from_euler([0, 0, yaw])
