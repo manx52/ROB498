@@ -1,1 +1,4 @@
-camera_topic: "/iris/usb_cam/"
+camera_topic_mono_sim: "/iris/usb_cam/image_raw"
+camera_topic_mono: "/iris/usb_cam/image_raw"
+camera_topic_t265: "camera/t265/image"
+camera_connected: false

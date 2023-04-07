@@ -10,3 +10,4 @@ external/Dockerfile
 external/.dockerignore
 external/px4-sitl-docker
 docs/*
+/drone_perception/myhal_bag

@@ -1,0 +1,28 @@
+ <launch>
+    <arg name="rosbag" default="true" />
+
+
+  <!-- Launch Realsense Camera -->
+  <include file="$(find realsense2_camera)/launch/rs_t265.launch" unless="$(arg rosbag)" >
+      <arg name="enable_fisheye1"          value="true"/>
+      <arg name="enable_fisheye2"          value="true"/>
+      <arg name="fisheye_fps"              value="30"/>
+      <arg name="gyro_fps"                 value="200"/>
+      <arg name="accel_fps"                value="62"/>
+      <arg name="enable_gyro"              value="false"/>
+      <arg name="enable_accel"             value="false"/>
+      <arg name="publish_odom_tf"          value="false"/>
+  </include>
+
+     <node pkg="drone_perception" type="t265_stereo.py" name="synchronized_listener" output="screen">
+    </node>
+
+     <node pkg="drone_perception" type="main.py" name="detector_obstacles" output="screen">
+        <rosparam file="$(find drone_perception)/config/config.yaml" command="load" />
+    </node>
+    <arg name="rvizconfig" default="$(find drone_perception)/rviz/t265.rviz" />
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" output="screen" />
+
+     <node pkg="rosbag" type="play" name="player" output="screen" args="--clock /home/manx52/catkin_ws/src/ROB498/drone_perception/myhal_bag/2023-03-27-08-06-15.bag -l" if="$(arg rosbag)"/>
+
+ </launch>
