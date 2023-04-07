@@ -22,10 +22,10 @@ class LocalPlanner:
         """
         self.node = node
         self.yawing = 0
-
+        self.sub_points_once = False
         self.sub_points_index = 0
         self.sub_points = PoseArray()
-        self.sub_points_once = False
+
         self.sub_points_N = 5
         for i in range(self.sub_points_N):
             temp_pose = Pose()
@@ -86,11 +86,12 @@ class LocalPlanner:
 
         return yaw, head_err_norm
 
-    def update_waypoint(self, error_pos: float, pose_goal: PoseStamped, curr_pose: PoseStamped) -> PoseStamped:
+    def update_waypoint(self, error_pos_goal: float, error_pos_sub: float, pose_goal: PoseStamped,
+                        curr_pose: PoseStamped) -> PoseStamped:
         """
 
-        :param markerArray:
-        :param error_pos:
+        :param error_pos_sub:
+        :param error_pos_goal:
         :param pose_goal:
         :param curr_pose:
         :return:
@@ -99,7 +100,17 @@ class LocalPlanner:
 
         # Check if the error between the drone's current pose and the current waypoint is within the error
         # tolerance and there are more waypoints in the sequence
-        if error_pos < self.node.error_tol and self.node.waypoint_index < (
+        if error_pos_sub < self.node.error_tol and self.sub_points_index < (
+                self.sub_points_N - 1):
+            msg = "Sub Waypoint " + str(self.sub_points_index) + " Cleared"
+            rospy.loginfo_throttle(1, msg)
+
+            self.sub_points_index += 1
+
+            pose_goal.pose = self.sub_points.poses[self.sub_points_index]
+            pose_goal.pose.orientation = curr_pose.pose.orientation
+
+        elif error_pos_goal < self.node.error_tol and self.node.waypoint_index < (
                 len(self.node.waypoints.poses) - 1):  # TODO tune
 
             # If the drone has reached the current waypoint and there are more waypoints in the sequence,
@@ -113,13 +124,38 @@ class LocalPlanner:
                 self.node.waypoints.poses[self.node.waypoint_index], self.node.drone_pose)
             q = quaternion_from_euler(0, 0, theta_d)
 
-            pose_goal.pose = curr_pose.pose
+            pose_goal.pose = self.sub_points.poses[self.sub_points_index]
             pose_goal.pose.orientation = Quaternion(q[0], q[1], q[2], q[3])  # yaw towards new target
+
             self.yawing = 0
 
+            self.sub_points_index = 0
+            self.sub_points_once = False
+
+            if self.node.vis:
+                # delete
+                markerArray_traj = MarkerArray()
+                for j, pts in enumerate(self.sub_points.poses):
+                    marker_traj = vis_marker(pts, 1, 1, 0, 2, 0.08)
+                    markerArray_traj.markers.append(marker_traj)
+                    markerArray_traj.markers[j].id = j
+
+                self.node.vis_traj_waypoints_pub.publish(markerArray_traj)
+
+            self.calc_sub_points()
+
+            if self.node.vis:
+                # insert
+                markerArray_traj = MarkerArray()
+                for j, pts in enumerate(self.sub_points.poses):
+                    marker_traj = vis_marker(pts, 1, 1, 0, 0, 0.08)
+                    markerArray_traj.markers.append(marker_traj)
+                    markerArray_traj.markers[j].id = j
+
+                self.node.vis_traj_waypoints_pub.publish(markerArray_traj)
         else:
             # Set the current waypoint as the goal waypoint
-            pose_goal.pose = self.node.waypoints.poses[self.node.waypoint_index]
+            pose_goal.pose = self.sub_points.poses[self.sub_points_index]
             pose_goal.pose.orientation = curr_pose.pose.orientation
 
         return pose_goal
@@ -132,8 +168,12 @@ class LocalPlanner:
 
         if self.node.vis:
             for i, pt in enumerate(self.node.waypoints.poses):
-                if i <= self.node.waypoint_index:
+                if i < self.node.waypoint_index:
                     marker = vis_marker(pt, 1, 0, 0, 2)
+                    markerArray.markers.append(marker)
+                    markerArray.markers[i].id = i
+                elif i == self.node.waypoint_index:
+                    marker = vis_marker(pt, 0, 1, 0, 0)
                     markerArray.markers.append(marker)
                     markerArray.markers[i].id = i
                 else:
@@ -190,6 +230,10 @@ class LocalPlanner:
 
                     self.node.vis_traj_waypoints_pub.publish(markerArray_traj)
 
+            # Calculate the error in current sub waypoint
+            error_pos_sub, _, _, = waypoint_pose_error(
+                self.sub_points.poses[self.sub_points_index], self.node.drone_pose)
+
             # Calculate the error in current waypoint
             error_pos, theta_d, heading_error_norm = waypoint_pose_error(
                 self.node.waypoints.poses[self.node.waypoint_index], self.node.drone_pose)
@@ -207,7 +251,7 @@ class LocalPlanner:
 
             elif self.yawing == 3:
 
-                pose_goal = self.update_waypoint(error_pos, pose_goal, curr_pose)
+                pose_goal = self.update_waypoint(error_pos, error_pos_sub, pose_goal, curr_pose)
 
             elif self.yawing < 3:
                 for i in range(30):
@@ -237,5 +281,14 @@ class LocalPlanner:
 
         # Set the timestamp of the pose header to the current time
         pose_goal.header.stamp = rospy.Time.now()
+
+        # # Visualization
+        # if self.node.vis:
+        #     # If visualization is enabled
+        #     # Publish the goal waypoint as a green marker
+        #
+        #     if self.node.WAYPOINTS_RECEIVED:
+        #         marker2 = vis_marker(self.node.waypoints.poses[self.node.waypoint_index], 0, 1, 0, 0)
+        #         self.node.vis_goal_pub.publish(marker2)
 
         return error_pos, heading_error_norm, pose_goal

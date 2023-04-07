@@ -68,10 +68,12 @@ class DroneComm:
         self.setpoint_vel_pub = rospy.Publisher("mavros/setpoint_velocity/cmd_vel_unstamped", Twist, queue_size=10)
 
         if self.vis:
+            self.vis_traj_goal_pub = rospy.Publisher(node_name + '/comm/vis_traj_goal', Marker, queue_size=1)
             self.vis_goal_pub = rospy.Publisher(node_name + '/comm/vis_goal', Marker, queue_size=1)
             self.vis_waypoints_pub = rospy.Publisher(node_name + '/comm/vis_waypoints', MarkerArray, queue_size=1)
             self.vis_path_pub = rospy.Publisher(node_name + '/comm/vis_path', Path, queue_size=1)
-            self.vis_traj_waypoints_pub = rospy.Publisher(node_name + '/comm/vis_traj_waypoints', MarkerArray, queue_size=1)
+            self.vis_traj_waypoints_pub = rospy.Publisher(node_name + '/comm/vis_traj_waypoints', MarkerArray,
+                                                          queue_size=1)
 
     # Callback Sensors
     def pose_callback(self, msg):
@@ -237,7 +239,7 @@ class DroneComm:
             if self.vis:
                 # If visualization is enabled
                 # Publish the goal waypoint as a green marker
-                marker = vis_marker(pose.pose, 0, 1, 0, 0)
+                marker = vis_marker(pose.pose, 0, 1, 0, 0, 0.08)
                 self.vis_goal_pub.publish(marker)
 
             # Sleep for a short period of time to ensure that the drone's position is updated before the next loop

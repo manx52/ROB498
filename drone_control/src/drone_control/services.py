@@ -81,7 +81,8 @@ class Services:
 
         if self.unlimited_test:
             self.node.waypoint_index = 0
-
+            self.node.local_planner.sub_points_once = False
+            self.node.local_planner.sub_points_index = 0
         self.bool_launch = False
         self.bool_test = True
         self.bool_land = False
