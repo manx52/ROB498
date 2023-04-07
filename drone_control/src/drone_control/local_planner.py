@@ -1,9 +1,13 @@
 import rosparam
+import rospy
+from nav_msgs.msg import OccupancyGrid
 from std_msgs.msg import Bool
 from tf.transformations import quaternion_from_euler
 from visualization_msgs.msg import MarkerArray
 
 from drone_control.utils import *
+from drone_mapping.grid_mapping import GridMapping
+from drone_mapping.utils import p2l
 
 
 class LocalPlanner:
@@ -16,7 +20,25 @@ class LocalPlanner:
         self.yawing = 0
         self.rotate_angle = rosparam.get_param("/rob498_drone_07/rotate_angle")
 
+        self.map_center_x = rospy.get_param('/drone_mapping/map_center_x', -5)
+        self.map_center_y = rospy.get_param('/drone_mapping/map_center_y', -5)
+        self.map_size_x = rospy.get_param('/drone_mapping/map_size_x', 10.0)
+        self.map_size_y = rospy.get_param('/drone_mapping/map_size_y', 10.0)
+        self.map_resolution = rospy.get_param('/drone_mapping/map_resolution', 0.1)
+
+        self.map = GridMapping(self.map_center_x, self.map_center_y, self.map_size_x, self.map_size_y,
+                               self.map_resolution)
+
+        self.map_sub = rospy.Subscriber('map', OccupancyGrid, self.map_callback,
+                                        queue_size=1)
+
         self.add_obs_pub = rospy.Publisher("add_obs", Bool, queue_size=1)
+
+    def map_callback(self, msg):
+        gridmap_p = msg.data // 100
+        gridmap = p2l(gridmap_p)
+
+        self.map.gridmap = np.array(gridmap)
 
     def rotating(self, theta_d: float, heading_error_norm: float, curr_pose: PoseStamped) -> Tuple[float, float]:
         """

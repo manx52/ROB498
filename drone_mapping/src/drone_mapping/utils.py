@@ -9,3 +9,11 @@ def l2p(grid: np.ndarray) -> np.ndarray:
     """
     return 1 - (1 / (1 + np.exp(grid)))
 
+
+def p2l(p):
+    """
+    l(x) = log(\frac{p(x)}{1 - p(x)})
+    :param p:
+    :return:
+    """
+    return np.log(p / (1 - p))
