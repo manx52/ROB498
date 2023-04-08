@@ -10,7 +10,9 @@ from sensor_msgs.msg import PointCloud2
 
 from drone_mapping.grid_mapping import GridMapping
 from drone_mapping.utils import l2p
+
 np.set_printoptions(threshold=sys.maxsize)
+
 
 class GridMappingROS:
     """
@@ -37,6 +39,8 @@ class GridMappingROS:
         self.map_resolution = rospy.get_param('/drone_mapping/map_resolution', 0.1)
         self.map_publish_freq = rospy.get_param('/drone_mapping/map_publish_freq', 1.0)
         self.update_movement = rospy.get_param('/drone_mapping/update_movement', 0.1)
+        self.obs_col_rad = rospy.get_param('/drone_mapping/obs_col_rad', 0.4)
+        self.drone_col_rad = rospy.get_param('/drone_mapping/drone_col_rad', 0.4)
 
         # Creata a OccupancyGrid message template
         self.map_msg = OccupancyGrid()
@@ -61,7 +65,7 @@ class GridMappingROS:
         :return:
         """
         self.gridmapping = GridMapping(self.map_center_x, self.map_center_y, self.map_size_x, self.map_size_y,
-                                       self.map_resolution)
+                                       self.map_resolution, self.drone_col_rad, self.obs_col_rad)
         self.is_gridmapping_initialized = True
 
     def publish_occupancygrid(self, gridmap: np.ndarray, stamp) -> None:

@@ -159,7 +159,7 @@ class DetectorObstacles(Detector):
 
         # Record end time and log the detection rate
         t_end = time.time()
-        rospy.loginfo_throttle(60, "Obstacle detection rate: " + str(t_end - t_start))
+        # rospy.loginfo_throttle(60, "Obstacle detection rate: " + str(t_end - t_start))
 
     def image_t265_callback(self, img: Image, debug=False):
         """
@@ -213,7 +213,7 @@ class DetectorObstacles(Detector):
 
         # Record end time and log the detection rate
         t_end = time.time()
-        rospy.loginfo_throttle(60, "Obstacle detection rate: " + str(t_end - t_start))
+        # rospy.loginfo_throttle(60, "Obstacle detection rate: " + str(t_end - t_start))
 
     def image_disparity_callback(self, img: Image, debug=False):
         """

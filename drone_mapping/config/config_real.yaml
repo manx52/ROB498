@@ -7,3 +7,5 @@ map_size_y: 15
 map_resolution: 0.1
 map_publish_freq: 1.0
 update_movement: 0.1
+drone_col_rad: 0.37
+obs_col_rad: 0.4

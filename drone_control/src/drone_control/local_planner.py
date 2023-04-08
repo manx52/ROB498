@@ -1,6 +1,5 @@
-import math
 import sys
-
+import ros_numpy
 import rosparam
 from geometry_msgs.msg import PoseArray
 from nav_msgs.msg import OccupancyGrid
@@ -8,7 +7,6 @@ from std_msgs.msg import Bool
 from tf.transformations import quaternion_from_euler
 from visualization_msgs.msg import MarkerArray
 
-from drone_common.transformation import Transformation
 from drone_control.utils import *
 from drone_mapping.grid_mapping import GridMapping
 from drone_mapping.utils import p2l
@@ -35,6 +33,7 @@ class LocalPlanner:
             temp_pose = Pose()
             self.sub_points.poses.append(temp_pose)
 
+        self.length_pause = rosparam.get_param("/rob498_drone_07/length_pause")
         self.rotate_angle = rosparam.get_param("/rob498_drone_07/rotate_angle")
 
         self.map_center_x = rospy.get_param('/drone_mapping/map_center_x', -5)
@@ -42,18 +41,20 @@ class LocalPlanner:
         self.map_size_x = rospy.get_param('/drone_mapping/map_size_x', 10.0)
         self.map_size_y = rospy.get_param('/drone_mapping/map_size_y', 10.0)
         self.map_resolution = rospy.get_param('/drone_mapping/map_resolution', 0.1)
+        self.obs_col_rad = rospy.get_param('/drone_mapping/obs_col_rad', 0.4)
+        self.drone_col_rad = rospy.get_param('/drone_mapping/drone_col_rad', 0.4)
 
         self.map = GridMapping(self.map_center_x, self.map_center_y, self.map_size_x, self.map_size_y,
-                               self.map_resolution)
+                               self.map_resolution, self.drone_col_rad, self.obs_col_rad)
 
         self.map_sub = rospy.Subscriber('map', OccupancyGrid, self.map_callback,
                                         queue_size=1)
 
         self.add_obs_pub = rospy.Publisher("add_obs", Bool, queue_size=1)
-
+        self.collision_traj_idx = []
     def map_callback(self, msg):
         # print("Orig: ", msg.data)
-        gridmap_p = np.array(msg.data).reshape((self.map.map_rows, self.map.map_cols))  # / 100
+        gridmap_p = np.array(msg.data).reshape((self.map.map_rows, self.map.map_cols)) / 100.0
         # idx = np.where(gridmap_p == 100)
         self.map.gridmap = p2l(gridmap_p)
         # print("LP: ", idx)
@@ -77,14 +78,14 @@ class LocalPlanner:
             head_error = yaw - theta
             head_err_norm = math.atan2(math.sin(head_error), math.cos(head_error))
 
-            rospy.loginfo_throttle(1, "yaw == 1")
+            # rospy.loginfo_throttle(1, "yaw == 1")
         elif self.yawing == 2:  # Left
             theta = calc_yaw(curr_pose.pose.orientation)
             yaw = (theta_d - self.rotate_angle)  # % (2 * np.pi) #0.523599
             head_error = yaw - theta
             head_err_norm = math.atan2(math.sin(head_error), math.cos(head_error))
 
-            rospy.loginfo_throttle(1, "yaw == 2")
+            # rospy.loginfo_throttle(1, "yaw == 2")
             # msg = "Yaw:  " + str(yaw) + " theta: " + str(theta) + " theta_d: " + str(theta_d)
             # rospy.loginfo_throttle(1, msg)
 
@@ -106,8 +107,8 @@ class LocalPlanner:
         # tolerance and there are more waypoints in the sequence
         if error_pos_sub < self.node.error_tol and self.sub_points_index < (
                 self.sub_points_N - 1):
-            msg = "Sub Waypoint " + str(self.sub_points_index) + " Cleared"
-            rospy.loginfo_throttle(1, msg)
+            # msg = "Sub Waypoint " + str(self.sub_points_index) + " Cleared"
+            # rospy.loginfo_throttle(1, msg)
 
             self.sub_points_index += 1
 
@@ -119,8 +120,8 @@ class LocalPlanner:
 
             # If the drone has reached the current waypoint and there are more waypoints in the sequence,
             # set the next waypoint as the current one and update the drone's pose
-            msg = "Waypoint " + str(self.node.waypoint_index) + " Cleared"
-            rospy.loginfo_throttle(1, msg)
+            # msg = "Waypoint " + str(self.node.waypoint_index) + " Cleared"
+            # rospy.loginfo_throttle(1, msg)
 
             self.node.waypoint_index += 1
 
@@ -132,15 +133,10 @@ class LocalPlanner:
             pose_goal.pose.orientation = Quaternion(q[0], q[1], q[2], q[3])  # yaw towards new target
 
             self.yawing = 0
-
+            self.vis_sub_points(2)
             self.sub_points_index = 0
             self.sub_points_once = False
 
-            self.vis_sub_points(2)
-
-            self.calc_trajectory()
-
-            self.vis_sub_points(0)
         else:
             # Set the current waypoint as the goal waypoint
             pose_goal.pose = self.sub_points.poses[self.sub_points_index]
@@ -154,7 +150,10 @@ class LocalPlanner:
             markerArray_traj = MarkerArray()
             for i, traj_pose in enumerate(self.traj_matrix):
                 for j, pts in enumerate(traj_pose.poses):
-                    marker_traj = vis_marker(pts, 1, 1, 0, action, 0.01, 4, 0.85)
+                    if i in self.collision_traj_idx:
+                        marker_traj = vis_marker(pts, 1, 0, 0, action, 0.01, 4, 0.85)
+                    else:
+                        marker_traj = vis_marker(pts, 1, 1, 0, action, 0.01, 4, 0.85)
 
                     marker_traj.points = []
                     p = Point()
@@ -163,11 +162,11 @@ class LocalPlanner:
                     p.z = 0
                     marker_traj.points.append(p)
 
-                    if j != self.sub_points_N-1:
+                    if j != self.sub_points_N - 1:
                         p = Point()
-                        p.x = traj_pose.poses[j+1].position.x - marker_traj.pose.position.x
-                        p.y = traj_pose.poses[j+1].position.y - marker_traj.pose.position.y
-                        p.z = traj_pose.poses[j+1].position.z - marker_traj.pose.position.z
+                        p.x = traj_pose.poses[j + 1].position.x - marker_traj.pose.position.x
+                        p.y = traj_pose.poses[j + 1].position.y - marker_traj.pose.position.y
+                        p.z = traj_pose.poses[j + 1].position.z - marker_traj.pose.position.z
                         marker_traj.points.append(p)
 
                     markerArray_traj.markers.append(marker_traj)
@@ -211,7 +210,27 @@ class LocalPlanner:
             self.traj_matrix[7] = self.calc_sub_points(2, 0.785398)
             self.traj_matrix[8] = self.calc_sub_points(2, 0.523599)
 
-            self.sub_points.poses = self.traj_matrix[0].poses
+            valid_opts = range(len(self.traj_matrix))
+            temp_pose_matrix = []
+            # Convert traj_matrix to numpy
+            for i in self.traj_matrix:  # All trajectories
+                temp_pose_list = []
+                for j in i.poses:  # All pts in trajectory
+                    temp_pose_list.append(ros_numpy.geometry.vector3_to_numpy(j.position)[:2])
+
+                temp_pose_matrix.append(np.array(temp_pose_list))
+
+            # send pts to mapping class for collision detection
+            pos = ros_numpy.geometry.vector3_to_numpy(self.node.drone_pose.pose.position)
+
+            self.collision_traj_idx = self.map.check_collision(np.array(temp_pose_matrix), pos)
+            # msg = "collision_traj_idx: " + str( self.collision_traj_idx)
+            # rospy.loginfo_throttle(1, msg)
+
+            valid_opts = np.delete(np.array(valid_opts), self.collision_traj_idx)
+            best_opt = self.map.best_path(valid_opts, len(self.traj_matrix))
+
+            self.sub_points.poses = self.traj_matrix[best_opt].poses
             self.sub_points_once = True
 
     def calc_sub_points(self, traj_type: int, angle: float = 1.0472) -> PoseArray:
@@ -263,11 +282,6 @@ class LocalPlanner:
         # If new waypoints are received, update the current waypoint and check if the drone has reached the
         # current waypoint
         if self.node.services.bool_test and self.node.WAYPOINTS_RECEIVED:
-            # Calc sub-points
-            if self.sub_points_index == 0 and self.node.waypoint_index == 0:  # Init
-                self.calc_trajectory()
-
-                self.vis_sub_points(0)
 
             # Calculate the error in current sub waypoint
             error_pos_sub, _, _, = waypoint_pose_error(
@@ -286,19 +300,23 @@ class LocalPlanner:
             if abs(heading_error_norm) > 0.1 and error_pos > 0.3:
                 pose_goal.pose.position = curr_pose.pose.position
                 pose_goal.pose.orientation = Quaternion(q[0], q[1], q[2], q[3])
-                rospy.loginfo_throttle(1, "heading_error_norm > 0.1")
+                # rospy.loginfo_throttle(1, "heading_error_norm > 0.1")
 
             elif self.yawing == 3:
+                # Calc sub-points
+                self.calc_trajectory()
+
+                self.vis_sub_points(0)
 
                 pose_goal = self.update_waypoint(error_pos, error_pos_sub, pose_goal, curr_pose)
 
             elif self.yawing < 3:
-                for i in range(30):
+                for i in range(self.length_pause):
                     if rospy.is_shutdown():
                         break
                     pose_goal.pose.position = curr_pose.pose.position
                     pose_goal.pose.orientation = curr_pose.pose.orientation
-                    if i == 15:
+                    if i == (self.length_pause // 2):
                         msg = Bool()
                         msg.data = True
                         self.add_obs_pub.publish(msg)
@@ -320,14 +338,5 @@ class LocalPlanner:
 
         # Set the timestamp of the pose header to the current time
         pose_goal.header.stamp = rospy.Time.now()
-
-        # # Visualization
-        # if self.node.vis:
-        #     # If visualization is enabled
-        #     # Publish the goal waypoint as a green marker
-        #
-        #     if self.node.WAYPOINTS_RECEIVED:
-        #         marker2 = vis_marker(self.node.waypoints.poses[self.node.waypoint_index], 0, 1, 0, 0)
-        #         self.node.vis_goal_pub.publish(marker2)
 
         return error_pos, heading_error_norm, pose_goal

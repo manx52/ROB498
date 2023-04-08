@@ -222,14 +222,14 @@ class DroneComm:
             yaw = calc_yaw(pose.pose.orientation)
 
             # Log the waypoint index and error to the console
-            msg = "Waypoint {index:} Pos.x {x:} Pos.y {y:} Pos.z {z:} YAW: {yaw:} Error Position: {error:} Error Yaw: {er:}"
-            rospy.loginfo_throttle(1, msg.format(index=self.waypoint_index, error=error_pos,
-                                                 x=pose.pose.position.x,
-                                                 y=pose.pose.position.y,
-                                                 z=pose.pose.position.z,
-                                                 yaw=yaw,
-                                                 er=heading_error_norm,
-                                                 ))
+            # msg = "Waypoint {index:} Pos.x {x:} Pos.y {y:} Pos.z {z:} YAW: {yaw:} Error Position: {error:} Error Yaw: {er:}"
+            # rospy.loginfo_throttle(1, msg.format(index=self.waypoint_index, error=error_pos,
+            #                                      x=pose.pose.position.x,
+            #                                      y=pose.pose.position.y,
+            #                                      z=pose.pose.position.z,
+            #                                      yaw=yaw,
+            #                                      er=heading_error_norm,
+            #                                      ))
 
             # Publish the goal waypoint to the drone's local position topic
             self.local_pos_pub.publish(pose)

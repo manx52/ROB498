@@ -7,4 +7,5 @@ rate: 20
 vis: true
 error_tol: 0.13
 unlimited_waypts: true
-rotate_angle: 1.0472 # 0.523599 30 degree  1.0472 60 degree  1.5708 90 degree
+rotate_angle: 0.785398 # 0.523599 30 degree 0.785398 45 degree  1.0472 60 degree  1.5708 90 degree
+length_pause: 30
