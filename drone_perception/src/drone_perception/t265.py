@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-## License: Apache 2.0. See LICENSE file in root directory.
-## Copyright(c) 2019 Intel Corporation. All Rights Reserved.
+# License: Apache 2.0. See LICENSE file in root directory.
+# Copyright(c) 2019 Intel Corporation. All Rights Reserved.
 # Python 2/3 compatibility
 from __future__ import print_function
 
@@ -255,7 +255,8 @@ try:
                                                      map2=undistort_rectify["right"][1],
                                                      interpolation=cv2.INTER_LINEAR)}
 
-            # compute the disparity on the center of the frames and convert it to a pixel disparity (divide by DISP_SCALE=16)
+            # compute the disparity on the center of the frames and convert it to a pixel disparity (divide by
+            # DISP_SCALE=16)
             disparity = stereo.compute(center_undistorted["left"], center_undistorted["right"]).astype(
                 np.float32) / 16.0
 

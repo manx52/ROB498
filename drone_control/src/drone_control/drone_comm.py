@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
+import tf
 from geometry_msgs.msg import Twist, PoseArray
 from mavros_msgs.msg import State
 from mavros_msgs.srv import CommandBoolRequest, SetModeRequest
 from nav_msgs.msg import Path
-from visualization_msgs.msg import MarkerArray
-import tf
-from drone_control.services import Services
-from drone_control.utils import *
-from drone_control.vicon import Vicon
+
 from drone_common.transformation import Transformation
-from drone_control.local_planner import LocalPlanner
+from drone_control.navigation import Navigation
+from drone_control.services import Services
+from drone_control.utils_math import *
+from drone_control.utils_vis import *
+from drone_control.vicon import Vicon
 
 
 class DroneComm:
@@ -38,7 +39,7 @@ class DroneComm:
         # Create submodules
         self.vicon = Vicon(self)
         self.services = Services(self, node_name)
-        self.local_planner = LocalPlanner(self)
+        self.navigation = Navigation(self)
 
         # Initialize variables
         self.drone_pose = PoseStamped()
@@ -217,31 +218,25 @@ class DroneComm:
 
                         last_req = rospy.Time.now()
 
-            error_pos, heading_error_norm, pose = self.local_planner.waypoint_nav(pose)
+            # Call local planner to determine next waypoint
+            error_pos, heading_error_norm, pose = self.navigation.waypoint_navigation(pose)
 
             yaw = calc_yaw(pose.pose.orientation)
 
             # Log the waypoint index and error to the console
-            # msg = "Waypoint {index:} Pos.x {x:} Pos.y {y:} Pos.z {z:} YAW: {yaw:} Error Position: {error:} Error Yaw: {er:}"
-            # rospy.loginfo_throttle(1, msg.format(index=self.waypoint_index, error=error_pos,
-            #                                      x=pose.pose.position.x,
-            #                                      y=pose.pose.position.y,
-            #                                      z=pose.pose.position.z,
-            #                                      yaw=yaw,
-            #                                      er=heading_error_norm,
-            #                                      ))
+            msg = "Waypoint {index:}  YAW: {yaw:} Error Position: {error:} Error Yaw: {er:}"
+            rospy.loginfo_throttle(1, msg.format(index=self.waypoint_index, error=error_pos,
+                                                 yaw=yaw,
+                                                 er=heading_error_norm,
+                                                 ))
 
             # Publish the goal waypoint to the drone's local position topic
             self.local_pos_pub.publish(pose)
-            # self.setpoint_vel_pub.publish(twist_msg)
 
             # Visualization
             if self.vis:
-                # If visualization is enabled
                 # Publish the goal waypoint as a green marker
                 marker = vis_marker(pose.pose, 0, 1, 0, 0, 0.08)
                 self.vis_goal_pub.publish(marker)
 
-            # Sleep for a short period of time to ensure that the drone's position is updated before the next loop
-            # iteration
             self.r.sleep()

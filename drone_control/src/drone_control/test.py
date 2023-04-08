@@ -1,7 +1,7 @@
 # !/usr/bin/env python3
 from geometry_msgs.msg import Point
 
-from drone_control.utils import *
+from drone_control.utils_math import *
 
 A = PoseStamped()
 B = PoseStamped()

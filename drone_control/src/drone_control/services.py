@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
-from geometry_msgs.msg import PoseArray, Point, TransformStamped
+import rospy
+from geometry_msgs.msg import PoseArray, TransformStamped, Point, Quaternion, Pose
 from mavros_msgs.srv import CommandBool, SetMode
 from std_msgs.msg import Int8
 from std_srvs.srv import Empty, EmptyResponse
-
-from drone_control.utils import *
 
 
 class Services:
@@ -50,8 +49,8 @@ class Services:
                                          self.callback_test_env)
         self.test_waypoints = rospy.Subscriber(node_name + '/comm/test_waypoints', Int8,
                                                self.callback_test_waypoints) \
-
-        # Publisher
+ \
+            # Publisher
         self.send_vicon = rospy.Publisher("/vicon/ROB498_Drone/ROB498_Drone", TransformStamped, queue_size=10)
         self.send_waypts = rospy.Publisher(node_name + '/comm/test_waypoints', Int8, queue_size=10)
 
@@ -81,8 +80,8 @@ class Services:
 
         if self.unlimited_test:
             self.node.waypoint_index = 0
-            self.node.local_planner.sub_points_once = False
-            self.node.local_planner.sub_points_index = 0
+            self.node.navigation.sub_points_once = False
+            self.node.navigation.sub_points_index = 0
         self.bool_launch = False
         self.bool_test = True
         self.bool_land = False
@@ -205,12 +204,14 @@ class Services:
 
     def callback_test_env(self, msg):
         """
+        Callback function to setup a test environment.
 
-        :param msg:
-        :return:
+        :param msg: Message received by the callback function.
+        :return: None
         """
         rospy.loginfo("Test Setup")
 
+        # Set up vicon_pose with default values.
         vicon_pose = TransformStamped()
         vicon_pose.transform.translation.x = 0.0
         vicon_pose.transform.translation.y = 0.0
@@ -220,13 +221,15 @@ class Services:
         vicon_pose.transform.rotation.z = 0.0
         vicon_pose.transform.rotation.w = 1.0
 
+        # Publish vicon_pose message to send_vicon topic.
         self.send_vicon.publish(vicon_pose)
 
+        # Set up waypt_num with the data received from the message.
         waypt_num = Int8()
         waypt_num.data = msg.data
 
+        # Publish waypt_num message to send_waypts topic.
         self.send_waypts.publish(waypt_num)
 
+        # Call handle_launch function to launch drone.
         self.handle_launch()
-
-
