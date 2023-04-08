@@ -1,0 +1,10 @@
+node_name: "rob498_drone_07"
+offset: 0.05
+land_offset: -0.3
+launch_height: 1.5
+vicon_enabled: false
+rate: 20
+vis: false
+error_tol: 0.075
+unlimited_waypts: true
+rotate_angle: 0.523599 # 0.523599 30 degree  1.0472 60 degree  1.5708 90 degree

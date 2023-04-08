@@ -15,17 +15,20 @@
 
     <!-- Drone Control -->
     <node pkg="drone_control" type="main.py" name="rob498_drone_07" required="true" output="screen" >
-        <rosparam file="$(find drone_control)/config/config.yaml" command="load" />
+        <rosparam file="$(find drone_control)/config/config_sim.yaml" command="load" if="$(arg simulation)"/>
+        <rosparam file="$(find drone_control)/config/config_real.yaml" command="load" unless="$(arg simulation)"/>
     </node>
 
     <!-- Obstacle Detection -->
     <node pkg="drone_perception" type="main.py" name="detector_obstacles" output="screen">
-        <rosparam file="$(find drone_perception)/config/config.yaml" command="load" />
+        <rosparam file="$(find drone_perception)/config/config_sim.yaml" command="load" if="$(arg simulation)"/>
+        <rosparam file="$(find drone_perception)/config/config_real.yaml" command="load" unless="$(arg simulation)"/>
     </node>
 
     <!-- Mapping Node-->
     <node pkg="drone_mapping" type="main.py" name="drone_mapping" output="screen">
-        <rosparam file="$(find drone_mapping)/config/config.yaml" command="load" />
+        <rosparam file="$(find drone_mapping)/config/config_sim.yaml" command="load" if="$(arg simulation)"/>
+        <rosparam file="$(find drone_mapping)/config/config_real.yaml" command="load" unless="$(arg simulation)"/>
     </node>
 
     <group unless="$(arg docker)">
