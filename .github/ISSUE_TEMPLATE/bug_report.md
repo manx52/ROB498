@@ -3,7 +3,7 @@ name: Bug report
 about: Create a report to help us improve
 title: ""
 labels: bug
-assignees: Vuwij
+assignees: manx52
 ---
 
 **Describe the bug**
