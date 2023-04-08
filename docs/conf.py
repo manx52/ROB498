@@ -11,11 +11,12 @@
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 import os
 import sys
-# basedir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-# sys.path.insert(0, basedir)
-sys.path.insert(0, os.path.abspath('../'))
+
 sys.path.insert(0, os.path.abspath('../../../devel/lib/python3/dist-packages/'))
 sys.path.insert(0, os.path.abspath('/opt/ros/noetic/lib/python3/dist-packages/'))
+
+
+
 # -- Project information -----------------------------------------------------
 
 project = 'ROB498'
