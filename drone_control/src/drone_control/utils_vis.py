@@ -91,11 +91,11 @@ def vis_sub_points(vis: bool, action: int, traj_matrix: list, collision_traj_idx
 
                 # If the trajectory index is in the list of collision trajectory indices, mark it as red
                 if i in collision_traj_idx:
-                    marker_traj = vis_marker(pts, 1, 0, 0, action, 0.01, 4, 0.85)
+                    marker_traj = vis_marker(pts, 1, 0, 0, action, 0.02, 4, 0.85)
 
                 # Otherwise, mark it as green
                 else:
-                    marker_traj = vis_marker(pts, 1, 1, 0, action, 0.01, 4, 0.85)
+                    marker_traj = vis_marker(pts, 1, 1, 0, action, 0.02, 4, 0.85)
 
                 # init the trajectory points for the current marker
                 marker_traj.points = []
