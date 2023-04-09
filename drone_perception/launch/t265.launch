@@ -1,5 +1,5 @@
  <launch>
-    <arg name="rosbag" default="true" />
+    <arg name="rosbag" default="false" />
 
 
   <!-- Launch Realsense Camera -->
@@ -18,16 +18,16 @@
 <!--    </node>-->
 
      <node pkg="drone_perception" type="main.py" name="detector_obstacles" output="screen">
-        <rosparam file="$(find drone_perception)/config/config.yaml" command="load" />
+        <rosparam file="$(find drone_perception)/config/config_real.yaml" command="load" />
     </node>
     <!-- Start a nodelet manager; the name must be unqualified here -->
-  <node pkg="nodelet" type="nodelet" name="pipeline" args="manager" />
+<!--  <node pkg="nodelet" type="nodelet" name="pipeline" args="manager" />-->
 <!--    <remap from="/camera/fisheye1/image_color" to="stereo/left/image_raw" />-->
 <!--     <remap from="/camera/fisheye2/image_color" to="stereo/right/image_raw" />-->
   <!-- Include the stereo_image_proc.launch file and pass in a qualified manager name -->
-  <include file="$(find stereo_image_proc)/launch/stereo_image_proc.launch" ns="stereo">
-    <arg name="manager" value="/pipeline" />
-  </include>
+<!--  <include file="$(find stereo_image_proc)/launch/stereo_image_proc.launch" ns="stereo">-->
+<!--    <arg name="manager" value="/pipeline" />-->
+<!--  </include>-->
 
 <!--     <node pkg="stereo_image_proc" type="stereo_image_proc" name="stereo_image_proc" output="screen" >-->
 <!--         <remap from="/camera/fisheye1/image_raw" to="stereo/left/image_raw" />-->
@@ -38,6 +38,6 @@
     <arg name="rvizconfig" default="$(find drone_perception)/rviz/t265.rviz" />
     <node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" output="screen" />
 
-     <node pkg="rosbag" type="play" name="player" output="screen" args="--clock /home/manx52/catkin_ws/src/ROB498/drone_perception/myhal_bag/2023-03-27-08-06-15.bag -l" if="$(arg rosbag)"/>
+<!--     <node pkg="rosbag" type="play" name="player" output="screen" args="&#45;&#45;clock /home/manx52/catkin_ws/src/ROB498/drone_perception/myhal_bag/2023-03-27-08-06-15.bag -l" if="$(arg rosbag)"/>-->
 
  </launch>
