@@ -49,6 +49,8 @@ class MappingROS:
         self.update_movement = rospy.get_param('/drone_mapping/update_movement', 0.1)
         self.obs_col_rad = rospy.get_param('/drone_mapping/obs_col_rad', 0.4)
         self.drone_col_rad = rospy.get_param('/drone_mapping/drone_col_rad', 0.4)
+        self.dir_enable = rospy.get_param('/drone_mapping/dir_enable', False)
+        self.fake_obs = rospy.get_param('/drone_mapping/fake_obs', False)
 
         # Creata a OccupancyGrid message template
         self.map_msg = OccupancyGrid()
@@ -58,6 +60,7 @@ class MappingROS:
         self.map_msg.info.height = int(self.map_size_y / self.map_resolution)
         self.map_msg.info.origin.position.x = self.map_center_x
         self.map_msg.info.origin.position.y = self.map_center_y
+
 
         # The subscribers to PointCloud2 for green and red mask point clouds
         self.point_cloud_green_sub = rospy.Subscriber("green_mask_point_cloud", PointCloud2, self.green_obs_callback,
@@ -71,6 +74,8 @@ class MappingROS:
         # ROS Rate
         self.r = rospy.Rate(20)
 
+
+
     def init_mapping(self):
         """
         Initializes the gridmapping object, which is responsible for mapping out the
@@ -81,7 +86,7 @@ class MappingROS:
 
         # Create a new Mapping object with the specified parameters
         self.gridmapping = Mapping(self.map_center_x, self.map_center_y, self.map_size_x, self.map_size_y,
-                                   self.map_resolution, self.drone_col_rad, self.obs_col_rad)
+                                   self.map_resolution, self.drone_col_rad, self.obs_col_rad, self.dir_enable, self.fake_obs)
 
         # Set the flag indicating that the gridmapping object has been initialized
         self.is_gridmapping_initialized = True
@@ -98,10 +103,10 @@ class MappingROS:
         """
 
         # Convert occupancy grid map to probability map
-        gridmap_p = l2p(gridmap)
+        # gridmap_p = l2p(gridmap)
 
         # Scale probability map from [0,1] to [0,100] and convert to int8
-        gridmap_int8 = (gridmap_p * 100).astype(dtype=np.int8)
+        gridmap_int8 = gridmap.astype(dtype=np.int8)
 
         # Publish map
         self.map_msg.data = gridmap_int8
@@ -131,11 +136,12 @@ class MappingROS:
 
             self.r.sleep()
 
-    def add_obs(self, msg: PointCloud2):
+    def add_obs(self, msg: PointCloud2, typ: int):
         """
         This method adds an incoming point cloud message to the grid map, updates it, and publishes the map with the
         specified frequency.
 
+        :param typ: type of obstacl to add to the map
         :param msg: PointCloud2 message containing the point cloud data.
         :return: None
         """
@@ -149,7 +155,7 @@ class MappingROS:
             xyz_array = ros_numpy.point_cloud2.pointcloud2_to_xyz_array(msg)
 
             # Update the grid map with the incoming point cloud
-            gridmap = self.gridmapping.update(xyz_array).flatten()  # update map
+            gridmap = self.gridmapping.update(xyz_array, typ).flatten()  # update map
 
             # Publish the occupancy grid map with the specified frequency
             if self.map_last_publish.to_sec() + 1.0 / self.map_publish_freq < rospy.Time.now().to_sec():
@@ -168,7 +174,8 @@ class MappingROS:
         """
 
         # Call the add_obs method with the msg argument to add the green obstacle data to the map
-        self.add_obs(msg)
+        if not self.fake_obs:
+            self.add_obs(msg, 50)
 
     def red_obs_callback(self, msg: PointCloud2):
         """
@@ -179,4 +186,5 @@ class MappingROS:
         """
 
         # Call the add_obs method with the msg argument to add the red obstacle data to the map
-        self.add_obs(msg)
+        if not self.fake_obs:
+            self.add_obs(msg, 100)

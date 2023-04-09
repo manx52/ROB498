@@ -28,8 +28,8 @@ class Navigation:
         """
         self.node = node
 
-        # Main matrix for all possible trajectories: 9x5x3
-        self.traj_matrix = [PoseArray()] * 9
+        # Main matrix for all possible trajectories: 16x5x3
+        self.traj_matrix = []
 
         # Init sub points with 5 intermediate points
         self.sub_points = PoseArray()
@@ -54,10 +54,12 @@ class Navigation:
         self.map_resolution = rospy.get_param('/drone_mapping/map_resolution', 0.1)
         self.obs_col_rad = rospy.get_param('/drone_mapping/obs_col_rad', 0.4)
         self.drone_col_rad = rospy.get_param('/drone_mapping/drone_col_rad', 0.4)
+        self.dir_enable = rospy.get_param('/drone_mapping/dir_enable', False)
+        self.fake_obs = rospy.get_param('/drone_mapping/fake_obs', False)
 
         # Create map object
         self.map = Mapping(self.map_center_x, self.map_center_y, self.map_size_x, self.map_size_y,
-                           self.map_resolution, self.drone_col_rad, self.obs_col_rad)
+                           self.map_resolution, self.drone_col_rad, self.obs_col_rad, self.dir_enable, self.fake_obs)
 
         # Subscribers
         self.map_sub = rospy.Subscriber('map', OccupancyGrid, self.map_callback,
@@ -76,12 +78,16 @@ class Navigation:
         :return: None
         """
         # Convert the 1D occupancy grid data in the message to a 2D numpy array
-        gridmap_p = np.array(msg.data).reshape((self.map.map_rows, self.map.map_cols)) / 100.0
-
+        gridmap_p = np.array(msg.data).reshape((self.map.map_rows, self.map.map_cols)) #/ 100.0
+        # print("print(gridmap_p): ",gridmap_p)
+        # green_idxes = np.transpose(np.where(gridmap_p == 50))
+        # red_idxes = np.transpose(np.where(gridmap_p == 100))
+        # print("green_idxes: ", len(green_idxes))
+        # print("red_idxes: ", len(red_idxes))
         # Convert the probability values in the numpy array to log-odds values and store them in the 'gridmap'
         # attribute of the 'map' object
-        self.map.gridmap = p2l(gridmap_p)
-
+        self.map.gridmap = gridmap_p #p2l(gridmap_p)
+        # print("self.map.gridmap: ", self.map.gridmap)
     def rotating(self, theta_d: float, heading_error_norm: float, curr_pose: PoseStamped, debug: bool = False) -> Tuple[
         float, float]:
         """
@@ -185,20 +191,27 @@ class Navigation:
         """
         if not self.sub_points_once:
             # Calculate trajectories
-            self.traj_matrix[0] = self.calc_trajectory(0)
-            self.traj_matrix[1] = self.calc_trajectory(1, 1.309)
-            self.traj_matrix[2] = self.calc_trajectory(1, 1.0472)
-            self.traj_matrix[3] = self.calc_trajectory(1, 0.785398)
-            self.traj_matrix[4] = self.calc_trajectory(1, 0.523599)
-            self.traj_matrix[5] = self.calc_trajectory(2, 1.309)
-            self.traj_matrix[6] = self.calc_trajectory(2, 1.0472)
-            self.traj_matrix[7] = self.calc_trajectory(2, 0.785398)
-            self.traj_matrix[8] = self.calc_trajectory(2, 0.523599)
+            self.traj_matrix = []
+            self.traj_matrix.append(self.calc_trajectory(0))
+            # 1 - 6
+            self.traj_matrix.append(self.calc_trajectory(1, 1.309))
+            self.traj_matrix.append(self.calc_trajectory(1, 1.0472))
+            self.traj_matrix.append(self.calc_trajectory(1, 0.785398))
+            self.traj_matrix.append(self.calc_trajectory(1, 0.645772))
+            self.traj_matrix.append(self.calc_trajectory(1, 0.523599))
+            self.traj_matrix.append(self.calc_trajectory(1, 0.436332))
+            # 7 - 12
+            self.traj_matrix.append(self.calc_trajectory(2, 1.309))
+            self.traj_matrix.append(self.calc_trajectory(2, 1.0472))
+            self.traj_matrix.append(self.calc_trajectory(2, 0.785398))
+            self.traj_matrix.append(self.calc_trajectory(2, 0.645772))
+            self.traj_matrix.append(self.calc_trajectory(2, 0.523599))
+            self.traj_matrix.append(self.calc_trajectory(2, 0.436332))
 
             valid_opts = range(len(self.traj_matrix))
             temp_pose_matrix = []
 
-            # Convert traj_matrix to numpy  9x5x3
+            # Convert traj_matrix to numpy  13x5x3
             for traj in self.traj_matrix:  # loop through all trajectories
                 temp_pose_list = []
                 for pts in traj.poses:  # loop through all points in trajectory
@@ -223,7 +236,7 @@ class Navigation:
             y_in_map_pix, x_in_map_pix = self.map.coord_to_grid(curr_pos[0], curr_pos[1])
 
             # send trajectories to mapping class for collision detection
-            self.collision_traj_idx = self.map.check_collision(temp_pose_matrix, y_in_map_pix, x_in_map_pix, debug)
+            self.collision_traj_idx = self.map.check_collision(temp_pose_matrix, y_in_map_pix, x_in_map_pix)
 
             if debug:
                 msg = "collision_traj_idx: " + str(self.collision_traj_idx)

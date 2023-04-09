@@ -15,7 +15,8 @@ class Mapping:
     """
 
     def __init__(self, map_center_x: float, map_center_y: float, map_size_x: float, map_size_y: float,
-                 map_resolution: float, drone_col_rad: float, obs_col_rad: float) -> None:
+                 map_resolution: float, drone_col_rad: float, obs_col_rad: float, dir_enable: bool,
+                 fake_obs: bool) -> None:
         """
         Initializes a new instance of the GridMapping class.
 
@@ -26,8 +27,15 @@ class Mapping:
         :param map_resolution: the resolution of the map, in meters per pixel
         :param drone_col_rad: the maximum collision radius of the drone, in meters
         :param obs_col_rad: the maximum collision radius of obstacles, in meters
+        :param dir_enable: Enable collision checking based on type of obstacle
+        :param fake_obs: Enable fake obstacles in environment
         """
 
+        # Enable dir
+        self.fake_obs = fake_obs
+        self.dir_enable = dir_enable
+
+        # Map setting
         self.map_center_x = map_center_x  # set the x-coordinate of the center of the map
         self.map_center_y = map_center_y  # set the y-coordinate of the center of the map
         self.map_size_x = map_size_x  # set the width of the map
@@ -39,12 +47,22 @@ class Mapping:
         # create an empty grid map with the specified dimensions
         self.gridmap = np.zeros((self.map_rows, self.map_cols))
 
+        # set boundary edge of map
+        for row in range(self.map_rows):
+            for col in range(self.map_cols):
+                if row == 0 or row == (self.map_rows - 1) or col == 0 or col == (self.map_cols - 1):
+                    self.gridmap[row, col] = 80
+
         # create an empty list to store the indices of non-zero elements in the grid map
         self.map_nonzero_idxes = []
 
         # convert the maximum collision radii from meters to pixels, and round up to the nearest integer
         self.obs_collision_radius_pix = int(math.ceil(obs_col_rad / self.map_resolution))
         self.drone_collision_radius_pix = int(math.ceil(drone_col_rad / self.map_resolution))
+
+        # Update fake obstacles
+        if self.fake_obs:
+            self.update_fake_obs()
 
     def grid_to_coord(self, i: int, j: int) -> Tuple[float, float]:
         """
@@ -72,12 +90,13 @@ class Mapping:
         j = (x - self.map_center_x) / self.map_resolution
         return i, j
 
-    def update(self, pts: np.ndarray) -> np.ndarray:
+    def update(self, pts: np.ndarray, typ: int) -> np.ndarray:
         """
         This function converts a given trajectory to robot circle points with the provided collision radius and then
         converts these points to the indices of the corresponding grid cells. It sets the corresponding grid cells to
         100 to represent obstacles.
 
+        :param typ: type of obstacle to add to the map
         :param pts: numpy array of shape (n_points, 2) representing the x and y coordinates of the trajectory points
         :return: numpy array of shape (map_height, map_width) representing the updated grid map
         """
@@ -93,7 +112,7 @@ class Mapping:
         temp_y = np.clip(footprint[..., 1], 0, self.gridmap.shape[1] - 1).astype(int)
 
         # Set the corresponding grid cells to 100 (representing an obstacle)
-        self.gridmap[temp_x, temp_y] = 100
+        self.gridmap[temp_x, temp_y] = typ
 
         # Return the updated grid map
         return self.gridmap
@@ -121,9 +140,25 @@ class Mapping:
         close_wall = [i for i in self.map_nonzero_idxes if
                       np.linalg.norm(i - [y_in_map_pix, x_in_map_pix]) < 300]
 
-        if debug:
-            print("self.map_nonzero_idxes: ", self.map_nonzero_idxes)
-            print("close_wall ", close_wall)
+        if self.dir_enable:
+            green_idxes = np.transpose(np.where(self.gridmap == 50))
+            red_idxes = np.transpose(np.where(self.gridmap == 100))
+            close_green = [i for i in green_idxes if
+                           np.linalg.norm(i - [y_in_map_pix, x_in_map_pix]) < 300]
+
+            close_red = [i for i in red_idxes if
+                         np.linalg.norm(i - [y_in_map_pix, x_in_map_pix]) < 300]
+
+        closest = 'red'
+
+        # if debug:
+        #     print("self.map_nonzero_idxes: ", self.map_nonzero_idxes)
+        #     print("close_wall ", close_wall)
+        # print("dir_enable: ", self.dir_enable)
+        # # print("green_idxes: ",green_idxes)
+        # print("Length green: ", len(close_green))
+        # # print("green_idxes: ", red_idxes)
+        # print("Length red: ", len(close_red))
 
         if len(close_wall) > 0:
 
@@ -136,6 +171,30 @@ class Mapping:
                         [int(traj_mat[opt, timestep, 0]), int(traj_mat[opt, timestep, 1])])
 
                     # Use kdtree to find the closest obstacle to the current location of the drone
+                    if timestep == 1 and self.dir_enable:
+                        if len(close_green) > 0:
+                            kdtree_green = sp.cKDTree(close_green)
+                            green_d, green_i = kdtree_green.query(curr_loc.T, k=1)
+                        else:
+                            green_d = float('inf')
+
+                        if len(close_red) > 0:
+                            kdtree_red = sp.cKDTree(close_red)
+                            red_d, red_i = kdtree_red.query(curr_loc.T, k=1)
+                        else:
+                            red_d = float('inf')
+
+                        if debug:
+                            print("opt: ", opt, "D: ", green_d, red_d, len(close_green), len(close_red))
+
+                        if opt in [1, 2, 3, 4, 5, 6] and closest == 'green' and self.dir_enable:
+                            collision_traj_idx.append(opt)
+                            break
+
+                        elif opt in [7, 8, 9, 10, 11, 12] and closest == 'red' and self.dir_enable:
+                            collision_traj_idx.append(opt)
+                            break
+
                     kdtree = sp.cKDTree(close_wall)
                     d, i = kdtree.query(curr_loc.T, k=1)
 
@@ -169,7 +228,6 @@ class Mapping:
 
         # Iterate over each point in the input array
         for pt in points:
-
             # Convert the x,y coordinates to grid coordinates
             i, j = self.coord_to_grid(pt[0], pt[1])
 
@@ -188,3 +246,24 @@ class Mapping:
         :return: The numpy array representing the gridmap.
         """
         return self.gridmap
+
+    def update_fake_obs(self):
+        """
+
+        :return:
+        """
+        # obs 1: 1,0 red
+        temp_pts = np.array([2, 0]).reshape((1, 2))
+        self.update(temp_pts, 100)
+
+        # obs 2: 2,1 green
+        temp_pts = np.array([4, 2]).reshape((1, 2))
+        self.update(temp_pts, 50)
+
+        # obs 3: 1,2 red
+        temp_pts = np.array([2, 4]).reshape((1, 2))
+        self.update(temp_pts, 100)
+
+        # obs 4: 0,1 green
+        temp_pts = np.array([0, 2]).reshape((1, 2))
+        self.update(temp_pts, 50)
