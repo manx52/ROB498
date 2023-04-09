@@ -8,15 +8,15 @@
 
   <buildtool_depend>catkin</buildtool_depend>
   <depend>rospy</depend>
-  <depend>geometry_msgs</depend>
+<!--  <depend>geometry_msgs</depend>-->
   <depend>drone_msgs</depend>
   <depend>cv_bridge</depend>
   <depend>sensor_msgs</depend>
 
   <depend>jetson_camera</depend>
-  <depend>image_proc</depend>
-  <depend>stereo_image_proc</depend>
-  <depend>camera_calibration</depend>
+<!--  <depend>image_proc</depend>-->
+<!--  <depend>stereo_image_proc</depend>-->
+<!--  <depend>camera_calibration</depend>-->
 
 
 </package>

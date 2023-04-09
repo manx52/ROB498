@@ -38,7 +38,7 @@ class Camera:
         self.focal_length = focal_length  #: Focal length of the camera (meters) distance to the camera plane as projected in 3D
         self.pose_base_link_straight = Transformation()
         self.pose = Transformation()
-        self.camera_info_subscriber = Subscriber(rospy.get_param("/detector_obstacles/camera_topic_mono") + "camera_info",
+        self.camera_info_subscriber = Subscriber(rospy.get_param("/detector_obstacles/camera_topic_mono_info"),
                                                  CameraInfo,
                                                  self.cameraInfoCallback)
         self.tf_listener = TransformListener()
