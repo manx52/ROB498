@@ -33,7 +33,7 @@ class DetectorObstacles(Detector):
         """
 
         super().__init__()
-
+        self.sim = rospy.get_param("/simulation")
         # Initialize subscribers and publishers
         self.disparity = None
         self.image_mono_subscriber1 = rospy.Subscriber(
@@ -47,11 +47,21 @@ class DetectorObstacles(Detector):
 
         self.fish1_publisher = rospy.Publisher("/stereo/left/image_raw", Image, queue_size=1)
         self.fish2_publisher = rospy.Publisher("/stereo/right/image_raw", Image, queue_size=1)
-
-        self.image_mono_subscriber = rospy.Subscriber(
-            rospy.get_param("/detector_obstacles/camera_topic_mono"), Image, self.image_mono_callback, queue_size=1,
-            buff_size=DEFAULT_BUFF_SIZE * 64
-        )
+        if not self.sim:
+            self.image_mono_subscriber = rospy.Subscriber(
+                rospy.get_param("/detector_obstacles/camera_topic_mono")+"_rect", Image, self.image_mono_callback, queue_size=1,
+                buff_size=DEFAULT_BUFF_SIZE * 64
+            )
+            self.mono3_publisher = rospy.Publisher(rospy.get_param("/detector_obstacles/camera_topic_mono")+"_rect", Image, queue_size=1)
+            self.image_mono_subscriber3 = rospy.Subscriber(
+                rospy.get_param("/detector_obstacles/camera_topic_mono"), Image, self.image_mono3_callback, queue_size=1,
+                buff_size=DEFAULT_BUFF_SIZE * 64
+            )
+        else:
+            self.image_mono_subscriber = rospy.Subscriber(
+                rospy.get_param("/detector_obstacles/camera_topic_mono"), Image, self.image_mono_callback, queue_size=1,
+                buff_size=DEFAULT_BUFF_SIZE * 64
+            )
 
         self.image_t265_subscriber = rospy.Subscriber(
             rospy.get_param("/detector_obstacles/camera_topic_t265"), Image, self.image_t265_callback, queue_size=1,
@@ -106,6 +116,18 @@ class DetectorObstacles(Detector):
         :return:
         """
         self.add_obs = msg.data
+
+    def image_mono3_callback(self, img):
+        # Transform to cv2/numpy image
+
+        image = CvBridge().imgmsg_to_cv2(img, desired_encoding="rgb8")
+        image = cv2.undistort(image, self.camera.camera_info.K, self.camera.camera_info.D)
+        image = cv2.rotate(image, cv2.ROTATE_180)
+
+        if self.mono3_publisher.get_num_connections() > 0:
+            img_out = CvBridge().cv2_to_imgmsg(image)
+            img_out.header = img.header
+            self.mono3_publisher.publish(img_out)
 
     def image_mono_callback(self, img: Image, debug=False):
         """
