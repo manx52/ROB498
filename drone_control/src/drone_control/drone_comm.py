@@ -68,13 +68,12 @@ class DroneComm:
         self.local_pos_pub = rospy.Publisher("mavros/setpoint_position/local", PoseStamped, queue_size=10)
         self.setpoint_vel_pub = rospy.Publisher("mavros/setpoint_velocity/cmd_vel_unstamped", Twist, queue_size=10)
 
-
         self.vis_traj_goal_pub = rospy.Publisher(node_name + '/comm/vis_traj_goal', Marker, queue_size=1)
         self.vis_goal_pub = rospy.Publisher(node_name + '/comm/vis_goal', Marker, queue_size=1)
         self.vis_waypoints_pub = rospy.Publisher(node_name + '/comm/vis_waypoints', MarkerArray, queue_size=1)
         self.vis_path_pub = rospy.Publisher(node_name + '/comm/vis_path', Path, queue_size=1)
         self.vis_traj_waypoints_pub = rospy.Publisher(node_name + '/comm/vis_traj_waypoints', MarkerArray,
-                                                          queue_size=1)
+                                                      queue_size=1)
 
     # Callback Sensors
     def pose_callback(self, msg):
@@ -142,7 +141,8 @@ class DroneComm:
         for pt in msg.poses:
             waypt = Transformation(position=[pt.position.x, pt.position.y, pt.position.z])
 
-            transformed_position = self.vicon.vicon_transform.rotation_matrix @ waypt.position
+            transformed_position = self.vicon.vicon_transform.rotation_matrix @ waypt.position - \
+                                   self.vicon.vicon_transform.rotation_matrix @ self.vicon.vicon_transform.position
             # print("Start")
             # print(self.vicon.vicon_transform.rotation_matrix)
             # print(waypt.position)

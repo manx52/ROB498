@@ -5,6 +5,8 @@ from mavros_msgs.srv import CommandBool, SetMode
 from std_msgs.msg import Int8
 from std_srvs.srv import Empty, EmptyResponse
 
+from drone_control.utils_math import calc_yaw
+
 
 class Services:
     """
@@ -28,6 +30,7 @@ class Services:
         self.bool_test = False
         self.bool_land = False
         self.bool_abort = False
+        self.test_vicon = self.unlimited_test = rospy.get_param("/rob498_drone_07/test_vicon")
 
         self.unlimited_test = rospy.get_param("/rob498_drone_07/unlimited_waypts")
 
@@ -164,10 +167,17 @@ class Services:
         waypoints_test.header.stamp = rospy.Time.now()
         if msg.data == 4:
             # 4 pt square
-            pt1 = Point(2, 0, self.node.launch_height - self.node.offset)
-            pt2 = Point(2, 2, self.node.launch_height - self.node.offset)
-            pt3 = Point(0, 2, self.node.launch_height - self.node.offset)
-            pt4 = Point(0, 0, self.node.launch_height - self.node.offset)
+            if self.test_vicon:
+                pt1 = Point(-2, -2, self.node.launch_height - self.node.offset)
+                pt2 = Point(-2, 2, self.node.launch_height - self.node.offset)
+                pt3 = Point(2, 2, self.node.launch_height - self.node.offset)
+                pt4 = Point(2, -2, self.node.launch_height - self.node.offset)
+            else:
+                pt1 = Point(2, 0, self.node.launch_height - self.node.offset)
+                pt2 = Point(2, 2, self.node.launch_height - self.node.offset)
+                pt3 = Point(0, 2, self.node.launch_height - self.node.offset)
+                pt4 = Point(0, 0, self.node.launch_height - self.node.offset)
+
             q1 = Quaternion(0, 0, 0, 1)
             waypoints_test.poses = [
                 Pose(pt1, q1),
@@ -212,16 +222,29 @@ class Services:
         rospy.loginfo("Test Setup")
 
         # Set up vicon_pose with default values.
-        vicon_pose = TransformStamped()
-        vicon_pose.transform.translation.x = 0.0
-        vicon_pose.transform.translation.y = 0.0
-        vicon_pose.transform.translation.z = 0.0
-        vicon_pose.transform.rotation.x = 0.0
-        vicon_pose.transform.rotation.y = 0.0
-        vicon_pose.transform.rotation.z = 0.0
-        vicon_pose.transform.rotation.w = 1.0
+        if self.test_vicon:
+            vicon_pose = TransformStamped()
+            vicon_pose.transform.translation.x = -3.0
+            vicon_pose.transform.translation.y = 3.0
+            vicon_pose.transform.translation.z = 0.0
+            vicon_pose.transform.rotation.x = 0.0
+            vicon_pose.transform.rotation.y = 0.0
+            # Yaw = 90 degree
+            vicon_pose.transform.rotation.z = 0.7071068  # 0.0
+            vicon_pose.transform.rotation.w = 0.7071068  # 1.0
+            print(calc_yaw(vicon_pose.transform.rotation))
+            # Publish vicon_pose message to send_vicon topic.
+        else:
+            vicon_pose = TransformStamped()
+            vicon_pose.transform.translation.x = 0
+            vicon_pose.transform.translation.y = 0
+            vicon_pose.transform.translation.z = 0.0
+            vicon_pose.transform.rotation.x = 0.0
+            vicon_pose.transform.rotation.y = 0.0
+            # Yaw = 90 degree
+            vicon_pose.transform.rotation.z = 0.0
+            vicon_pose.transform.rotation.w = 1.0
 
-        # Publish vicon_pose message to send_vicon topic.
         self.send_vicon.publish(vicon_pose)
 
         # Set up waypt_num with the data received from the message.

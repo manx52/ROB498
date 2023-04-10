@@ -11,3 +11,4 @@ drone_col_rad: 0.3
 obs_col_rad: 0.5
 dir_enable: true
 fake_obs: true
+test_vicon: false

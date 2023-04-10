@@ -53,11 +53,6 @@ class Vicon:
 
         rospy.loginfo(self.vicon_transform.rotation_matrix)
 
-        # Update drone position based on Vicon data.
-        self.node.drone_pose.pose.position.x = msg.transform.translation.x  # TODO Fix
-        self.node.drone_pose.pose.position.y = msg.transform.translation.y
-        self.node.drone_pose.pose.position.z = msg.transform.translation.z
-
         # Publish Vicon pose data if enabled.
         if self.vicon_pose_enabled:
             self.node.drone_pose.header = msg.header
