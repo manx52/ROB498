@@ -78,16 +78,9 @@ class Navigation:
         :return: None
         """
         # Convert the 1D occupancy grid data in the message to a 2D numpy array
-        gridmap_p = np.array(msg.data).reshape((self.map.map_rows, self.map.map_cols)) #/ 100.0
-        # print("print(gridmap_p): ",gridmap_p)
-        # green_idxes = np.transpose(np.where(gridmap_p == 50))
-        # red_idxes = np.transpose(np.where(gridmap_p == 100))
-        # print("green_idxes: ", len(green_idxes))
-        # print("red_idxes: ", len(red_idxes))
-        # Convert the probability values in the numpy array to log-odds values and store them in the 'gridmap'
-        # attribute of the 'map' object
-        self.map.gridmap = gridmap_p #p2l(gridmap_p)
-        # print("self.map.gridmap: ", self.map.gridmap)
+        gridmap_p = np.array(msg.data).reshape((self.map.map_rows, self.map.map_cols))  # / 100.0
+        self.map.gridmap = gridmap_p
+
     def rotating(self, theta_d: float, heading_error_norm: float, curr_pose: PoseStamped, debug: bool = False) -> Tuple[
         float, float]:
         """
@@ -123,6 +116,18 @@ class Navigation:
 
             if debug:
                 rospy.loginfo_throttle(1, "yaw == 2")
+                msg = "Yaw:  " + str(yaw) + " theta: " + str(theta) + " theta_d: " + str(theta_d)
+                rospy.loginfo_throttle(1, msg)
+
+        elif self.yawing == 3:  # Back to original
+
+            theta = calc_yaw(curr_pose.pose.orientation)
+            yaw = 0
+            head_error = yaw - theta
+            head_err_norm = math.atan2(math.sin(head_error), math.cos(head_error))
+
+            if debug:
+                rospy.loginfo_throttle(1, "yaw == 3")
                 msg = "Yaw:  " + str(yaw) + " theta: " + str(theta) + " theta_d: " + str(theta_d)
                 rospy.loginfo_throttle(1, msg)
 
@@ -399,7 +404,7 @@ class Navigation:
             q = quaternion_from_euler(0, 0, yaw)
 
             # While holding position rotate to direction of new point
-            if abs(heading_error_norm) > 0.1 and error_pos > 0.3:
+            if abs(heading_error_norm) > 0.1 and error_pos > 0.3 and self.yawing < 4:
                 pose_goal.pose.position = curr_pose.pose.position
                 pose_goal.pose.orientation = Quaternion(q[0], q[1], q[2], q[3])
 
@@ -407,7 +412,7 @@ class Navigation:
                 if debug:
                     rospy.loginfo_throttle(1, "heading_error_norm > 0.1")
 
-            elif self.yawing == 3:
+            elif self.yawing == 4:
 
                 # Calculate sub-points
                 self.trajectory_rollout()
@@ -419,7 +424,7 @@ class Navigation:
                 # Update the goal waypoint
                 pose_goal = self.update_waypoint(error_pos, error_pos_sub, pose_goal, curr_pose)
 
-            elif self.yawing < 3:
+            elif self.yawing < 4:
 
                 # Pause for a specified length of time
                 for i in range(self.length_pause):
