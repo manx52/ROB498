@@ -1,4 +1,5 @@
 import cv2
+import rospy
 import tf
 
 from drone_perception.camera import Camera
@@ -12,7 +13,11 @@ class Detector:
         """
         Initializes a new instance of the Detector class.
         """
-        self.camera = Camera()
+        self.sim = rospy.get_param("/simulation")
+        if not self.sim:
+            self.camera = Camera(HORIZONTAL_FOV=2.70772)
+        else:
+            self.camera = Camera()
 
         self.br = tf.TransformBroadcaster()
 

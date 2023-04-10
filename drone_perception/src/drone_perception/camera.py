@@ -1,18 +1,13 @@
 from functools import cached_property
 
-import cv2
-import numpy as np
 import rospy
-import scipy
-import tf
-import tf2_py
+from geometry_msgs.msg import PoseStamped
 from rospy import Subscriber
 from sensor_msgs.msg import CameraInfo
-from tf.transformations import *
 from tf import TransformListener
+from tf.transformations import *
+
 from drone_common.transformation import Transformation
-from geometry_msgs.msg import PoseStamped
-import copy
 
 
 class Camera:
@@ -22,7 +17,8 @@ class Camera:
 
     """
 
-    def __init__(self, HORIZONTAL_FOV=1.047, focal_length=2.77191356, resolution_y=240, resolution_x=320):
+    def __init__(self, HORIZONTAL_FOV=1.047, focal_length_x=2.77191356, focal_length_y=2.77191356, resolution_y=240,
+                 resolution_x=320):
         """
         Initializes the camera object
 
@@ -35,7 +31,12 @@ class Camera:
         self.resolution_y = resolution_y
         self.resolution_x = resolution_x
         self.horizontalFOV = HORIZONTAL_FOV
-        self.focal_length = focal_length  #: Focal length of the camera (meters) distance to the camera plane as projected in 3D
+
+        # : Focal length of the camera (meters) distance to the camera plane as
+        # projected in 3D
+        self.focal_length_x = focal_length_x
+        self.focal_length_y = focal_length_y
+
         self.pose_base_link_straight = Transformation()
         self.pose = Transformation()
         self.camera_info_subscriber = Subscriber(rospy.get_param("/detector_obstacles/camera_topic_mono_info"),
@@ -73,33 +74,10 @@ class Camera:
         :param camera_info: from the camera info topic
         """
         self.camera_info = camera_info
-        self.focal_length = self.camera_info.K[0]
+        self.focal_length_x = self.camera_info.K[0]
+        self.focal_length_y = self.camera_info.K[4]
         self.resolution_y = self.camera_info.height
         self.resolution_x = self.camera_info.width
-
-    def findFloorCoordinate(self, pos: [int]) -> [int]:
-        """
-        From a camera pixel, get a coordinate on the floor
-
-        :param pos: The position on the screen in pixels (x, y)
-        :return: The 3D coordinate of the pixel as projected to the floor
-        """
-
-        tx, ty = self.imageToWorldFrame(pos[0], pos[1])
-        pixel_pose = Transformation(position=(self.focal_length, tx, ty))
-        camera_pose = self.pose
-        pixel_world_pose = camera_pose @ pixel_pose
-        temp = camera_pose.position[2]
-        # if camera_pose.position[2] < 0:
-        #     temp = -camera_pose.position[2]
-
-        ratio = (temp - pixel_world_pose.position[2]) / temp  # TODO Fix divide by 0 problem
-        x_delta = (pixel_world_pose.position[0] - camera_pose.position[0]) / ratio
-        y_delta = (pixel_world_pose.position[1] - camera_pose.position[1]) / ratio
-
-        pts = [x_delta + camera_pose.position[0] - 2 * temp, y_delta + camera_pose.position[1], temp]
-        # print(pts)
-        return pts
 
     @cached_property
     def verticalFOV(self):
@@ -114,14 +92,14 @@ class Camera:
         """
         The height of the image sensor (m)
         """
-        return math.tan(self.verticalFOV / 2.0) * 2.0 * self.focal_length
+        return math.tan(self.verticalFOV / 2.0) * 2.0 * self.focal_length_y
 
     @cached_property
     def imageSensorWidth(self):
         """
         The width of the image sensor (m)
         """
-        return math.tan(self.horizontalFOV / 2.0) * 2.0 * self.focal_length
+        return math.tan(self.horizontalFOV / 2.0) * 2.0 * self.focal_length_x
 
     @cached_property
     def pixelHeight(self):
@@ -203,7 +181,7 @@ class Camera:
         y2w = -y2w
         z2w = -z2w
 
-        f = self.focal_length
+        f = (self.focal_length_x + self.focal_length_y) / 2.0
 
         thetay1 = math.atan2(y1w, f)
         thetay2 = math.atan2(y2w, f)
