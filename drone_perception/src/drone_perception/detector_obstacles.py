@@ -36,15 +36,7 @@ class DetectorObstacles(Detector):
         self.sim = rospy.get_param("/simulation")
         # Initialize subscribers and publishers
         self.disparity = None
-        self.image_mono_subscriber1 = rospy.Subscriber(
-            "/camera/fisheye1/image_raw", Image, self.image_mono1_callback, queue_size=1,
-            buff_size=DEFAULT_BUFF_SIZE * 64
-        )
-        self.image_mono_subscriber2 = rospy.Subscriber(
-            "/camera/fisheye2/image_raw", Image, self.image_mono2_callback, queue_size=1,
-            buff_size=DEFAULT_BUFF_SIZE * 64
-        )
-
+      
         self.fish1_publisher = rospy.Publisher("/stereo/left/image_raw", Image, queue_size=1)
         self.fish2_publisher = rospy.Publisher("/stereo/right/image_raw", Image, queue_size=1)
         if not self.sim:
@@ -120,12 +112,13 @@ class DetectorObstacles(Detector):
     def image_mono3_callback(self, img):
         # Transform to cv2/numpy image
 
-        image = CvBridge().imgmsg_to_cv2(img, desired_encoding="rgb8")
-        image = cv2.undistort(image, self.camera.camera_info.K, self.camera.camera_info.D)
+        image = CvBridge().imgmsg_to_cv2(img, desired_encoding="8UC3")
+	
+        image = cv2.undistort(image, np.array(self.camera.camera_info.K).reshape((3,3)), np.array(self.camera.camera_info.D))
         image = cv2.rotate(image, cv2.ROTATE_180)
 
         if self.mono3_publisher.get_num_connections() > 0:
-            img_out = CvBridge().cv2_to_imgmsg(image)
+            img_out = CvBridge().cv2_to_imgmsg(image, encoding="bgr8")
             img_out.header = img.header
             self.mono3_publisher.publish(img_out)
 
