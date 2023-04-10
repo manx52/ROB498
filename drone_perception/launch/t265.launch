@@ -1,4 +1,8 @@
  <launch>
+     <arg name="simulation" default="$(optenv SIM true)" />
+
+
+    <param name="simulation" type="bool" value="$(arg simulation)" />
     <arg name="rosbag" default="false" />
 
 
