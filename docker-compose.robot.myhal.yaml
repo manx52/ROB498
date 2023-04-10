@@ -41,6 +41,7 @@ services:
       - /usr/lib/aarch64-linux-gnu/libcudnn_static.a:/usr/lib/aarch64-linux-gnu/libcudnn_static.a
       - /usr/lib/aarch64-linux-gnu/libcudnn_static_v8.a:/usr/lib/aarch64-linux-gnu/libcudnn_static_v8.a
       - /dev:/dev
+      - /tmp/argus_socket:/tmp/argus_socket
     device_cgroup_rules:
       - 'c 81:* rmw'
       - 'c 189:* rmw'

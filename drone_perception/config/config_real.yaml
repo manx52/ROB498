@@ -1,5 +1,5 @@
 camera_topic_mono: "main_camera/image_raw"
 camera_topic_mono_info: "main_camera/camera_info"
 camera_topic_t265: "camera/t265/image"
-camera_connected: true
+camera_connected: false
 add_obs: false
