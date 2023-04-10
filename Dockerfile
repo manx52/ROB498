@@ -79,8 +79,12 @@ RUN curl -sSL https://get.docker.com/ | sh
 
 # Important for Jetson Nano
 RUN if [[ "$(dpkg --print-architecture)" == "arm64" ]] ; then \
-    apt-get update && apt-get install -y \ libomp5 libopenblas-dev libgstreamer1.0-0 gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly gstreamer1.0-libav gstreamer1.0-doc gstreamer1.0-tools libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev && \
-    apt-get update -y && apt-get install -y \ pkg-config zlib1g-dev  libwebp-dev libtbb2 libtbb-dev  libgtk2.0-dev pkg-config libavcodec-dev libavformat-dev libswscale-dev libv4l-dev cmake && \
+    apt-get update && \
+    apt-get install -y libomp5 libopenblas-dev && \
+    apt-get update && \
+    apt-get install -y libgstreamer1.0-0 gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly gstreamer1.0-libav gstreamer1.0-doc gstreamer1.0-tools libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev && \
+    apt-get update -y && \
+    apt-get install -y  pkg-config zlib1g-dev  libwebp-dev libtbb2 libtbb-dev  libgtk2.0-dev pkg-config libavcodec-dev libavformat-dev libswscale-dev libv4l-dev cmake && \
     pip install gdown && \
     gdown https://drive.google.com/uc?id=1AQQuBS9skNk1mgZXMp0FmTIwjuxc81WY && \
     gdown https://drive.google.com/uc?id=1BaBhpAizP33SV_34-l3es9MOEFhhS1i2 && \
