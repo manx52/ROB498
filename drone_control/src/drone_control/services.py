@@ -30,9 +30,6 @@ class Services:
         self.bool_test = False
         self.bool_land = False
         self.bool_abort = False
-        self.test_vicon = self.unlimited_test = rospy.get_param("/rob498_drone_07/test_vicon")
-
-        self.unlimited_test = rospy.get_param("/rob498_drone_07/unlimited_waypts")
 
         # Services
         self.srv_launch = rospy.Service(node_name + '/comm/launch', Empty, self.callback_launch)
@@ -46,6 +43,10 @@ class Services:
 
         rospy.wait_for_service("/mavros/set_mode")
         self.set_mode_client = rospy.ServiceProxy("mavros/set_mode", SetMode)
+
+        self.test_vicon = rospy.get_param("/rob498_drone_07/test_vicon")
+
+        self.unlimited_test = rospy.get_param("/rob498_drone_07/unlimited_waypts")
 
         # Subscribe to 'test_waypoints' topic
         self.test_env = rospy.Subscriber(node_name + '/comm/test_env', Int8,

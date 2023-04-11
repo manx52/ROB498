@@ -187,7 +187,7 @@ class Mapping:
                         if green_d < red_d:
                             closest = 'green'
 
-                        if True:
+                        if debug:
                             print("opt: ", opt, "D: ", green_d, red_d, len(close_green), len(close_red))
 
                     if opt in [7, 8, 9, 10, 11, 12] and closest == 'green' and self.dir_enable:
