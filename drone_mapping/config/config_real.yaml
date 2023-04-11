@@ -10,4 +10,4 @@ update_movement: 0.1
 drone_col_rad: 0.3
 obs_col_rad: 0.5
 dir_enable: false
-fake_obs: true
+fake_obs: false
