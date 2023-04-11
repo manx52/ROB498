@@ -127,16 +127,19 @@ class DetectorObstacles(Detector):
             cv2.imshow("CVT Color Contrast", image_crop_blurred)
             cv2.waitKey(0)
 
-        # Create masks for green and red obstacles in the image
-        green_only = cv2.inRange(hsv, (35, 85, 0), (115, 255, 255))
-        red_only = cv2.inRange(hsv, (100, 70, 50), (180, 255, 255))
-
-        # Publish point clouds and masks for green and red obstacles
-        self.point_cloud_processing(image, img.header, green_only, self.green_mask_publisher,
-                                    self.green_mask_point_cloud_publisher)
-        self.point_cloud_processing(image, img.header, red_only, self.red_mask_publisher,
-                                    self.red_mask_point_cloud_publisher)
-
+        if self.sim:
+            # Create masks for green and red obstacles in the image
+            green_only = cv2.inRange(hsv, (35, 85, 0), (115, 255, 255))
+            red_only = cv2.inRange(hsv, (100, 70, 50), (180, 255, 255))
+            # Publish point clouds and masks for green and red obstacles
+            self.point_cloud_processing(image, img.header, green_only, self.green_mask_publisher,
+                                        self.green_mask_point_cloud_publisher)
+            self.point_cloud_processing(image, img.header, red_only, self.red_mask_publisher,
+                                        self.red_mask_point_cloud_publisher)
+        else:
+            yellow_only = cv2.inRange(hsv, (0, 180, 190), (40, 235, 255))
+            self.point_cloud_processing(image, img.header, yellow_only, self.green_mask_publisher,
+                                        self.green_mask_point_cloud_publisher)
         # Publish bounding box image message if there are subscribers
         if self.bounding_box_publisher.get_num_connections() > 0:
             img_out = CvBridge().cv2_to_imgmsg(image)
