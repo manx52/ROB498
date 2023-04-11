@@ -111,9 +111,12 @@ class DetectorObstacles(Detector):
             return
 
         rospy.loginfo_once("Started Publishing Obstacles")
-
-        # Convert ROS image message to OpenCV image
-        image = CvBridge().imgmsg_to_cv2(img, desired_encoding="rgb8")
+        if self.sim:
+            # Convert ROS image message to OpenCV image
+            image = CvBridge().imgmsg_to_cv2(img, desired_encoding="rgb8")
+        else:
+            # Convert ROS image message to OpenCV image
+            image = CvBridge().imgmsg_to_cv2(img, desired_encoding="bgr8")
 
         # Apply bilateral filtering to reduce noise
         image_crop_blurred = cv2.bilateralFilter(image, 9, 75, 75)
@@ -137,7 +140,7 @@ class DetectorObstacles(Detector):
             self.point_cloud_processing(image, img.header, red_only, self.red_mask_publisher,
                                         self.red_mask_point_cloud_publisher)
         else:
-            yellow_only = cv2.inRange(hsv, (35, 85, 0), (115, 255, 255))
+            yellow_only = cv2.inRange(hsv, (35, 85, 0), (115, 255, 255)) #   (0, 180, 190), (40, 235, 255)
             self.point_cloud_processing(image, img.header, yellow_only, self.green_mask_publisher,
                                         self.green_mask_point_cloud_publisher)
         # Publish bounding box image message if there are subscribers
@@ -176,7 +179,7 @@ class DetectorObstacles(Detector):
             if not self.sim:
                 area = cv2.contourArea(cnts[i])
 
-                if area > 1000:
+                if area > 500:
                     # Draw bounding box on the input image
                     cv2.rectangle(image, (x, y), (x + w, y + h), (0, 0, 255), 2)
                     box.append(self.camera.calculateBallFromBoundingBoxes(0.3, boundingBoxes))

@@ -15,7 +15,7 @@ class Detector:
         """
         self.sim = rospy.get_param("/simulation")
         if not self.sim:
-            self.camera = Camera(HORIZONTAL_FOV=1.085595) #2.70772
+            self.camera = Camera(HORIZONTAL_FOV=2.55,focal_length_x=4.0556476, focal_length_y=5.068133) #2.70772  2.55
         else:
             self.camera = Camera()
 

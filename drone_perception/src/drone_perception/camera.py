@@ -8,7 +8,7 @@ from tf import TransformListener
 from tf.transformations import *
 
 from drone_common.transformation import Transformation
-
+import numpy as np
 
 class Camera:
     """
@@ -17,8 +17,8 @@ class Camera:
 
     """
 
-    def __init__(self, HORIZONTAL_FOV=1.047, focal_length_x=2.77191356, focal_length_y=2.77191356, resolution_y=240,
-                 resolution_x=320):
+    def __init__(self, HORIZONTAL_FOV=1.047, focal_length_x=2.77191356, focal_length_y=2.77191356, resolution_y=480,
+                 resolution_x=640):
         """
         Initializes the camera object
 
@@ -76,8 +76,8 @@ class Camera:
         self.camera_info = camera_info
         self.focal_length_x = self.camera_info.K[0]
         self.focal_length_y = self.camera_info.K[4]
-        self.resolution_y = self.camera_info.height
-        self.resolution_x = self.camera_info.width
+        self.resolution_y = float(self.camera_info.height)
+        self.resolution_x = float(self.camera_info.width)
 
     @cached_property
     def verticalFOV(self):
@@ -99,7 +99,7 @@ class Camera:
         """
         The width of the image sensor (m)
         """
-        return math.tan(self.horizontalFOV / 2.0) * 2.0 * self.focal_length_x
+        return math.tan(self.horizontalFOV / 2.0) * 2.0 * self.focal_length_x 
 
     @cached_property
     def pixelHeight(self):
@@ -176,22 +176,29 @@ class Camera:
         # Convert pixels to coordinates
         y1w, z1w = self.imageToWorldFrame(y1, z1)
         y2w, z2w = self.imageToWorldFrame(y2, z2)
+        #print("POS: ", y1," : ",y1w," : ",z1," : ", z1w," : ", y2," : ",y2w," : ",z2," : ", z2w)
         y1w = -y1w
         z1w = -z1w
         y2w = -y2w
         z2w = -z2w
 
-        f = (self.focal_length_x + self.focal_length_y) / 2.0
+        f = self.focal_length_x
 
-        thetay1 = math.atan2(y1w, f)
-        thetay2 = math.atan2(y2w, f)
+        thetay1 = math.atan2(y1w, self.focal_length_x)
+        thetay2 = math.atan2(y2w, self.focal_length_x)
 
         thetayy = (thetay2 - thetay1) / 2
         thetay = thetay1 + thetayy
+        dy = r / math.sin(thetayy)        
 
-        dy = r / math.sin(thetayy)
+        thetay1_y = math.atan2(y1w, self.focal_length_y)
+        thetay2_y = math.atan2(y2w, self.focal_length_y)
 
-        xy = (math.cos(thetay) * dy, math.sin(thetay) * dy)
+        thetayy_y = (thetay2_y - thetay1_y) / 2
+        thetay_y = thetay1_y + thetayy_y
+        dy_y = r / math.sin(thetayy_y)
+
+        xy = (math.cos(thetay) * dy, math.sin(thetay_y) * dy_y)
 
         thetaz1 = math.atan2(z1w, f)
         thetaz2 = math.atan2(z2w, f)
@@ -202,12 +209,16 @@ class Camera:
         dz = r / math.sin(thetazz)
 
         xz = (math.cos(thetaz) * dz, math.sin(thetaz) * dz)
-
-        ball_x = xy[0]
-        ball_y = xy[1]
-        ball_z = xz[1]
-
+	if not self.sim:
+            ball_x = xy[0] - abs((xy[1])/3.592853)
+            ball_y = xy[1]/10.0
+            ball_z = xz[1]
+        else:
+            ball_x = xy[0]
+            ball_y = xy[1]
+            ball_z = xz[1]
+        #print("orig_x: ", xy[0]," ball_x ", ball_x, " ball_y ", ball_y," ball_z ", ball_z)
         tr = Transformation([ball_x, -ball_y, -ball_z])
         tr_cam = self.pose @ tr
-
+        #print("tr_cam ", tr_cam.position)
         return tr_cam
