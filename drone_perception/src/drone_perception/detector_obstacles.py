@@ -173,10 +173,18 @@ class DetectorObstacles(Detector):
             x_right_cond = (x + w) == 0 or (x + w) == self.camera.resolution_x
             if x_left_cond or x_right_cond:
                 continue
+            if not self.sim:
+                area = cv2.contourArea(cnts[i])
 
-            # Draw bounding box on the input image
-            cv2.rectangle(image, (x, y), (x + w, y + h), (0, 0, 255), 2)
-            box.append(self.camera.calculateBallFromBoundingBoxes(0.3, boundingBoxes))
+                if area > 1000:
+                    # Draw bounding box on the input image
+                    cv2.rectangle(image, (x, y), (x + w, y + h), (0, 0, 255), 2)
+                    box.append(self.camera.calculateBallFromBoundingBoxes(0.3, boundingBoxes))
+
+            else:
+                # Draw bounding box on the input image
+                cv2.rectangle(image, (x, y), (x + w, y + h), (0, 0, 255), 2)
+                box.append(self.camera.calculateBallFromBoundingBoxes(0.3, boundingBoxes))
 
         if len(cnts) > 0:
             self.publish_point_cloud = True

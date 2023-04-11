@@ -13,3 +13,4 @@ venv/
 /docs/_build/
 /docs/generated/
 /drone_perception/myhal_bag
+/drone_perception/images
