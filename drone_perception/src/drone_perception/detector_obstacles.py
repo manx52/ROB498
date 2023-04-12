@@ -86,7 +86,7 @@ class DetectorObstacles(Detector):
 
         image = cv2.undistort(image, np.array(self.camera.camera_info.K).reshape((3, 3)),
                               np.array(self.camera.camera_info.D))
-        #image = cv2.rotate(image, cv2.ROTATE_180)
+        # image = cv2.rotate(image, cv2.ROTATE_180)
 
         if self.mono3_publisher.get_num_connections() > 0:
             img_out = CvBridge().cv2_to_imgmsg(image, encoding="bgr8")
@@ -140,11 +140,10 @@ class DetectorObstacles(Detector):
             self.point_cloud_processing(image, img.header, red_only, self.red_mask_publisher,
                                         self.red_mask_point_cloud_publisher)
         else:
-            yellow_only = cv2.inRange(hsv, (35, 85, 0), (115, 255, 255)) #   (0, 180, 190), (40, 235, 255)
+            yellow_only = cv2.inRange(hsv, (35, 85, 0), (115, 255, 255))  # (0, 180, 190), (40, 235, 255)
 
-
-            self.point_cloud_processing(image, img.header, yellow_only, self.green_mask_publisher,
-                                        self.green_mask_point_cloud_publisher)
+            self.point_cloud_processing(image, img.header, yellow_only, self.red_mask_publisher,
+                                        self.red_mask_point_cloud_publisher)
         # Publish bounding box image message if there are subscribers
         if self.bounding_box_publisher.get_num_connections() > 0:
             img_out = CvBridge().cv2_to_imgmsg(image)
@@ -169,6 +168,7 @@ class DetectorObstacles(Detector):
         # Find bounding box for each contour
         cnts, hierarchy = cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         box = []
+        obs_color = "red"
         for i, region in enumerate(cnts):
             x, y, w, h = cv2.boundingRect(region)
             boundingBoxes = [[x, y + h], [x + w, y]]
@@ -186,39 +186,86 @@ class DetectorObstacles(Detector):
                     cv2.rectangle(image, (x, y), (x + w, y + h), (0, 0, 255), 2)
                     box.append(self.camera.calculateBallFromBoundingBoxes(0.3, boundingBoxes))
 
+                    black_canvas = np.zeros_like(image)
+                    cv2.rectangle(black_canvas, (x, y), (x + w, y + h), (0, 255, 255), cv2.FILLED)
+                    newImage = cv2.bitwise_and(image, black_canvas)
+                    hsv2 = cv2.cvtColor(src=newImage, code=cv2.COLOR_BGR2HSV)
+                    green_only = cv2.inRange(hsv2, (35, 85, 0), (115, 255, 255))
+
+                    # print(cv2.countNonZero(green_only),cv2.countNonZero(red_only))
+                    if cv2.countNonZero(green_only) > 0:
+                        obs_color = "green"
+
+                    # cv2.rectangle(image, (x, y), (x + w, y + h), color, 2)
             else:
                 # Draw bounding box on the input image
                 cv2.rectangle(image, (x, y), (x + w, y + h), (0, 0, 255), 2)
                 box.append(self.camera.calculateBallFromBoundingBoxes(0.3, boundingBoxes))
+        if self.sim:
+            if len(cnts) > 0:
+                self.publish_point_cloud = True
+            else:
 
-        if len(cnts) > 0:
-            self.publish_point_cloud = True
+                self.publish_point_cloud = False
+
+            # Publish the input image if there is any subscriber
+            if image_publisher.get_num_connections() > 0:
+                img_out = CvBridge().cv2_to_imgmsg(img)
+                img_out.header = img_header
+                image_publisher.publish(img_out)
+
+            # Create point cloud message and publish it if there is any subscriber
+            if self.publish_point_cloud and point_cloud_publisher.get_num_connections() > 0 and self.add_obs:
+                points3d = []
+
+                for pt in box:
+
+                    # Exclude points too far away
+                    pt_drone_frame = pt.position - self.camera.pose.position
+                    pt_transform = Transformation(position=pt_drone_frame)
+                    if pt_transform.norm_squared < self.point_cloud_max_distance ** 2:  # TODO remove lines behind
+                        points3d.append(pt.position)
+                # print("How many", len(points3d))
+                if len(points3d) > 0:
+                    # Publish point cloud message
+                    header = Header()
+                    header.stamp = img_header.stamp
+                    header.frame_id = "map"
+                    point_cloud_msg = pcl2.create_cloud_xyz32(header, points3d)
+                    point_cloud_publisher.publish(point_cloud_msg)
         else:
+            if len(cnts) > 0:
+                self.publish_point_cloud = True
+            else:
 
-            self.publish_point_cloud = False
+                self.publish_point_cloud = False
 
-        # Publish the input image if there is any subscriber
-        if image_publisher.get_num_connections() > 0:
-            img_out = CvBridge().cv2_to_imgmsg(img)
-            img_out.header = img_header
-            image_publisher.publish(img_out)
+            # Publish the input image if there is any subscriber
+            if obs_color == "green":
+                image_publisher = self.green_mask_publisher
+                point_cloud_publisher = self.green_mask_point_cloud_publisher
 
-        # Create point cloud message and publish it if there is any subscriber
-        if self.publish_point_cloud and point_cloud_publisher.get_num_connections() > 0 and self.add_obs:
-            points3d = []
+            if image_publisher.get_num_connections() > 0:
+                img_out = CvBridge().cv2_to_imgmsg(img)
+                img_out.header = img_header
+                image_publisher.publish(img_out)
 
-            for pt in box:
+            # Create point cloud message and publish it if there is any subscriber
+            if self.publish_point_cloud and point_cloud_publisher.get_num_connections() > 0 and self.add_obs:
+                points3d = []
 
-                # Exclude points too far away
-                pt_drone_frame = pt.position - self.camera.pose.position
-                pt_transform = Transformation(position=pt_drone_frame)
-                if pt_transform.norm_squared < self.point_cloud_max_distance ** 2:  # TODO remove lines behind
-                    points3d.append(pt.position)
-            # print("How many", len(points3d))
-            if len(points3d) > 0:
-                # Publish point cloud message
-                header = Header()
-                header.stamp = img_header.stamp
-                header.frame_id = "map"
-                point_cloud_msg = pcl2.create_cloud_xyz32(header, points3d)
-                point_cloud_publisher.publish(point_cloud_msg)
+                for pt in box:
+
+                    # Exclude points too far away
+                    pt_drone_frame = pt.position - self.camera.pose.position
+                    pt_transform = Transformation(position=pt_drone_frame)
+                    if pt_transform.norm_squared < self.point_cloud_max_distance ** 2:  # TODO remove lines behind
+                        points3d.append(pt.position)
+                # print("How many", len(points3d))
+                if len(points3d) > 0:
+                    # Publish point cloud message
+                    header = Header()
+                    header.stamp = img_header.stamp
+                    header.frame_id = "map"
+                    point_cloud_msg = pcl2.create_cloud_xyz32(header, points3d)
+                    point_cloud_publisher.publish(point_cloud_msg)

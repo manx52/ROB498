@@ -8,18 +8,38 @@ def point_cloud_processing(self, image, img_header, img, image_publisher, point_
     cntsSorted = sorted(cnts, key=lambda x: cv2.contourArea(x), reverse=True)
     box = []
     temp_src = image
+    black_canvas = image
     for i, region in enumerate(cntsSorted):
         area = cv2.contourArea(cntsSorted[i])
 
         if area > 1000:
             print("Area: ", area, " number ", i )
-            cv2.drawContours(temp_src, cntsSorted, i, (255, 0, 0), 2)
+            #cv2.drawContours(temp_src, cntsSorted, i, (255, 0, 0), 2)
             x, y, w, h = cv2.boundingRect(region)
 
             boundingBoxes = [[x, y + h], [x + w, y]]
+
+
             cv2.rectangle(temp_src, (x, y), (x + w, y + h), (0, 0, 255), 2)
+            black_canvas = np.zeros_like(temp_src)
+            cv2.rectangle(black_canvas, (x, y), (x + w, y + h), (0, 255, 255), cv2.FILLED)
+            newImage = cv2.bitwise_and(temp_src, black_canvas)
+            hsv2 = cv2.cvtColor(src=newImage, code=cv2.COLOR_BGR2HSV)
+            green_only = cv2.inRange(hsv2, (35, 85, 0), (115, 255, 255))
+
+            #print(cv2.countNonZero(green_only),cv2.countNonZero(red_only))
+            if cv2.countNonZero(green_only) > 0:
+                color = (0, 255, 0)
+            else:
+                color = (0, 0, 255)
+            cv2.rectangle(temp_src, (x, y), (x + w, y + h), color, 2)
+            # cv2.imshow('hsv2', hsv2)
+            # cv2.imshow('green_only', green_only)
+            # cv2.imshow('red_only', red_only)
+            # cv2.waitKey(0)
 
     cv2.imshow('image_rectangle', temp_src)
+    cv2.imshow('black_canvas', black_canvas)
     cv2.waitKey(0)
 
 
