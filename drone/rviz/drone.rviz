@@ -231,7 +231,7 @@ Visualization Manager:
       Marker Topic: /rob498_drone_07/comm/vis_traj_waypoints
       Name: Sub Waypoint Goal
       Namespaces:
-        "": true
+        {}
       Queue Size: 1
       Value: true
   Enabled: true
@@ -278,9 +278,9 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.544796347618103
+      Pitch: 1.5597963333129883
       Target Frame: <Fixed Frame>
-      Yaw: 0.8354037404060364
+      Yaw: 3.1304054260253906
     Saved: ~
 Window Geometry:
   Camera Green Mask:

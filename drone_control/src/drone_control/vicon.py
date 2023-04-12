@@ -43,7 +43,7 @@ class Vicon:
         [roll, pitch, yaw] = Transformation.get_euler_from_quaternion([q.x, q.y, q.z, q.w])
 
         # Create a Vicon quaternion from the Euler angles. Removing roll and pitch
-        vicon_quaternion = Transformation.get_quaternion_from_euler([0, 0, 1.5708])
+        vicon_quaternion = Transformation.get_quaternion_from_euler([0, 0, yaw]) #1.5708
 
         # Extract Vicon position from message.
         vicon_position = [msg.transform.translation.x, msg.transform.translation.y, msg.transform.translation.z]

@@ -196,7 +196,7 @@ class Services:
             pt5 = Point(2.8, 2.6, self.node.launch_height - self.node.offset)
             pt6 = Point(3.0, 0, self.node.launch_height - self.node.offset)
             pt7 = Point(2.2, -2.8, self.node.launch_height - self.node.offset)
-            pt8 = Point(0, 0, self.node.launch_height - self.node.offset)
+            pt8 = Point(-3.2, -2.9, self.node.launch_height - self.node.offset)
 
             q1 = Quaternion(0, 0, 0, 1)
             waypoints_test.poses = [

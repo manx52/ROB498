@@ -165,9 +165,9 @@ class Mapping:
             # Going through all trajectories using kdtrees calculate distance from each point to obstacles
             for opt in range(traj_mat.shape[0]):
                 for timestep in range(traj_mat.shape[1]-1):
-                    x_diff = (traj_mat[opt, timestep + 1, 0] - traj_mat[opt, timestep, 0]) / 4
-                    y_diff = (traj_mat[opt, timestep + 1, 1] - traj_mat[opt, timestep, 1]) / 4
-                    for i in range(5):
+                    x_diff = (traj_mat[opt, timestep + 1, 0] - traj_mat[opt, timestep, 0]) / 9
+                    y_diff = (traj_mat[opt, timestep + 1, 1] - traj_mat[opt, timestep, 1]) / 9
+                    for i in range(10):
                         temp_pose_x = traj_mat[opt, timestep, 0] + x_diff * i
                         temp_pose_y = traj_mat[opt, timestep, 1] + y_diff * i
 
@@ -197,11 +197,11 @@ class Mapping:
                             if debug:
                                 print("opt: ", opt, "D: ", green_d, red_d, len(close_green), len(close_red))
 
-                        if opt in [7, 8, 9, 10, 11, 12] and closest == 'green' and self.dir_enable:
+                        if opt in [0, 8, 9, 10, 11, 12,13] and closest == 'green' and self.dir_enable:
                             collision_traj_idx.append(opt)
                             break
 
-                        elif opt in [1, 2, 3, 4, 5, 6] and closest == 'red' and self.dir_enable:
+                        elif opt in [0, 1, 2, 3, 4, 5, 6,7] and closest == 'red' and self.dir_enable:
                             collision_traj_idx.append(opt)
                             break
 

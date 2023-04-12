@@ -250,20 +250,22 @@ class Navigation:
             # Calculate trajectories
             self.traj_matrix = []
             self.traj_matrix.append(self.calc_trajectory(0))
-            # 1 - 6
+            # 1 - 7
             self.traj_matrix.append(self.calc_trajectory(1, 1.309))
             self.traj_matrix.append(self.calc_trajectory(1, 1.0472))
             self.traj_matrix.append(self.calc_trajectory(1, 0.785398))
             self.traj_matrix.append(self.calc_trajectory(1, 0.645772))
             self.traj_matrix.append(self.calc_trajectory(1, 0.523599))
             self.traj_matrix.append(self.calc_trajectory(1, 0.436332))
-            # 7 - 12
+            self.traj_matrix.append(self.calc_trajectory(1, 0.349066))
+            # 8 - 13
             self.traj_matrix.append(self.calc_trajectory(2, 1.309))
             self.traj_matrix.append(self.calc_trajectory(2, 1.0472))
             self.traj_matrix.append(self.calc_trajectory(2, 0.785398))
             self.traj_matrix.append(self.calc_trajectory(2, 0.645772))
             self.traj_matrix.append(self.calc_trajectory(2, 0.523599))
             self.traj_matrix.append(self.calc_trajectory(2, 0.436332))
+            self.traj_matrix.append(self.calc_trajectory(2, 0.349066))
 
             valid_opts = range(len(self.traj_matrix))
             temp_pose_matrix = []
@@ -411,7 +413,7 @@ class Navigation:
             pose_goal.pose.orientation = Quaternion(q[0], q[1], q[2], q[3])  # yaw towards new target
 
             # Reset the yawing flag and visualize the new set of sub-waypoints
-            self.yawing = 0
+            self.yawing = 3
             vis_sub_points(self.node.vis, 2, self.traj_matrix, self.collision_traj_idx, self.sub_points_N,
                            self.node.vis_traj_waypoints_pub)
             self.sub_points_index = 0
@@ -477,7 +479,8 @@ class Navigation:
                 pose_goal = self.update_waypoint(error_pos, error_pos_sub, pose_goal, curr_pose)
 
             elif self.yawing < 4:
-
+                if self.yawing == 0:
+                    self.yawing = 3
                 # Pause for a specified length of time
                 for i in range(self.length_pause):
                     if rospy.is_shutdown():
