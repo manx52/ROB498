@@ -292,17 +292,17 @@ class Mapping:
         :return:
         """
         # obs 1: 1,0 red
-        temp_pts = np.array([2.1, -2.1]).reshape((1, 2))
+        temp_pts = np.array([-3*0.61,-3*0.61]).reshape((1, 2))
         self.update(temp_pts, 100)
 
         # obs 2: 2,1 green
-        temp_pts = np.array([2.1, 2.1]).reshape((1, 2))
+        temp_pts = np.array([4.1*0.61, -2*0.61]).reshape((1, 2))
         self.update(temp_pts, 50)
 
         # obs 3: 1,2 red
-        temp_pts = np.array([-2.1, -2.1]).reshape((1, 2))
+        temp_pts = np.array([1.5*0.61, 3.5*0.61]).reshape((1, 2))
         self.update(temp_pts, 100)
 
         # obs 4: 0,1 green
-        temp_pts = np.array([-2.1, 2.1]).reshape((1, 2))
+        temp_pts = np.array([-4*0.61, 2.5*0.61]).reshape((1, 2))
         self.update(temp_pts, 50)
