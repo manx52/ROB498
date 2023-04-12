@@ -42,7 +42,11 @@ class Navigation:
         # Settings for trajectory
         self.length_pause = rosparam.get_param("/rob498_drone_07/length_pause")
         self.rotate_angle = rosparam.get_param("/rob498_drone_07/rotate_angle")
-        self.yawing = 0
+        self.initial_rotate = rosparam.get_param("/rob498_drone_07/initial_rotate")
+        if self.initial_rotate:
+            self.yawing = -4
+        else:
+            self.yawing = 0
         self.sub_points_index = 0
         self.collision_traj_idx = []
 
@@ -93,11 +97,56 @@ class Navigation:
         :return: a tuple containing the new angle of the robot and the normalized heading error.
         """
 
-        # Default Straight
-        head_err_norm = heading_error_norm
-        yaw = theta_d
+        # init
+        if self.yawing == -4:  # 45
 
-        if self.yawing == 1:  # Right
+            theta = calc_yaw(curr_pose.pose.orientation)
+            yaw = 0.785398
+            head_error = yaw - theta
+            head_err_norm = math.atan2(math.sin(head_error), math.cos(head_error))
+
+            if debug:
+                rospy.loginfo_throttle(1, "yaw == -4")
+                msg = "Yaw:  " + str(yaw) + " theta: " + str(theta) + " theta_d: " + str(theta_d)
+                rospy.loginfo_throttle(1, msg)
+
+        elif self.yawing == -3:  # 45
+
+            theta = calc_yaw(curr_pose.pose.orientation)
+            yaw = 2.35619
+            head_error = yaw - theta
+            head_err_norm = math.atan2(math.sin(head_error), math.cos(head_error))
+
+            if debug:
+                rospy.loginfo_throttle(1, "yaw == -3")
+                msg = "Yaw:  " + str(yaw) + " theta: " + str(theta) + " theta_d: " + str(theta_d)
+                rospy.loginfo_throttle(1, msg)
+
+        elif self.yawing == -2:  # 45
+
+            theta = calc_yaw(curr_pose.pose.orientation)
+            yaw = 3.92699
+            head_error = yaw - theta
+            head_err_norm = math.atan2(math.sin(head_error), math.cos(head_error))
+
+            if debug:
+                rospy.loginfo_throttle(1, "yaw == -2")
+                msg = "Yaw:  " + str(yaw) + " theta: " + str(theta) + " theta_d: " + str(theta_d)
+                rospy.loginfo_throttle(1, msg)
+
+        elif self.yawing == -1:  # 45
+
+            theta = calc_yaw(curr_pose.pose.orientation)
+            yaw = 5.49779
+            head_error = yaw - theta
+            head_err_norm = math.atan2(math.sin(head_error), math.cos(head_error))
+
+            if debug:
+                rospy.loginfo_throttle(1, "yaw == -1")
+                msg = "Yaw:  " + str(yaw) + " theta: " + str(theta) + " theta_d: " + str(theta_d)
+                rospy.loginfo_throttle(1, msg)
+
+        elif self.yawing == 1:  # Right
             theta = calc_yaw(curr_pose.pose.orientation)
             yaw = (theta_d + self.rotate_angle)
             head_error = yaw - theta
@@ -130,6 +179,9 @@ class Navigation:
                 rospy.loginfo_throttle(1, "yaw == 3")
                 msg = "Yaw:  " + str(yaw) + " theta: " + str(theta) + " theta_d: " + str(theta_d)
                 rospy.loginfo_throttle(1, msg)
+        else:  # straight
+            head_err_norm = heading_error_norm
+            yaw = theta_d
 
         return yaw, head_err_norm
 

@@ -10,6 +10,7 @@ from tf.transformations import *
 from drone_common.transformation import Transformation
 import numpy as np
 
+
 class Camera:
     """
     This is a reusable class that instantiates an instance of a Camera object that listens to the camera related topics
@@ -26,7 +27,7 @@ class Camera:
         """
 
         self.pose = Transformation()  #: Pose of the camera
-
+        self.sim = rospy.get_param("/simulation")
         self.camera_info = CameraInfo()  #: Camera info object recieved from the subscriber
         self.resolution_y = resolution_y
         self.resolution_x = resolution_x
@@ -99,7 +100,7 @@ class Camera:
         """
         The width of the image sensor (m)
         """
-        return math.tan(self.horizontalFOV / 2.0) * 2.0 * self.focal_length_x 
+        return math.tan(self.horizontalFOV / 2.0) * 2.0 * self.focal_length_x
 
     @cached_property
     def pixelHeight(self):
@@ -176,7 +177,7 @@ class Camera:
         # Convert pixels to coordinates
         y1w, z1w = self.imageToWorldFrame(y1, z1)
         y2w, z2w = self.imageToWorldFrame(y2, z2)
-        #print("POS: ", y1," : ",y1w," : ",z1," : ", z1w," : ", y2," : ",y2w," : ",z2," : ", z2w)
+        # print("POS: ", y1," : ",y1w," : ",z1," : ", z1w," : ", y2," : ",y2w," : ",z2," : ", z2w)
         y1w = -y1w
         z1w = -z1w
         y2w = -y2w
@@ -189,7 +190,7 @@ class Camera:
 
         thetayy = (thetay2 - thetay1) / 2
         thetay = thetay1 + thetayy
-        dy = r / math.sin(thetayy)        
+        dy = r / math.sin(thetayy)
 
         thetay1_y = math.atan2(y1w, self.focal_length_y)
         thetay2_y = math.atan2(y2w, self.focal_length_y)
@@ -209,16 +210,16 @@ class Camera:
         dz = r / math.sin(thetazz)
 
         xz = (math.cos(thetaz) * dz, math.sin(thetaz) * dz)
-	if not self.sim:
-            ball_x = xy[0] - abs((xy[1])/3.592853)
-            ball_y = xy[1]/10.0
+        if not self.sim:
+            ball_x = xy[0] - abs((xy[1]) / 3.592853)
+            ball_y = xy[1] / 10.0
             ball_z = xz[1]
         else:
             ball_x = xy[0]
             ball_y = xy[1]
             ball_z = xz[1]
-        #print("orig_x: ", xy[0]," ball_x ", ball_x, " ball_y ", ball_y," ball_z ", ball_z)
+        # print("orig_x: ", xy[0]," ball_x ", ball_x, " ball_y ", ball_y," ball_z ", ball_z)
         tr = Transformation([ball_x, -ball_y, -ball_z])
         tr_cam = self.pose @ tr
-        #print("tr_cam ", tr_cam.position)
+        # print("tr_cam ", tr_cam.position)
         return tr_cam
