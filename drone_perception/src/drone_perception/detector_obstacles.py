@@ -140,7 +140,7 @@ class DetectorObstacles(Detector):
             self.point_cloud_processing(image, img.header, red_only, self.red_mask_publisher,
                                         self.red_mask_point_cloud_publisher)
         else:
-            yellow_only = cv2.inRange(hsv, (35, 85, 0), (115, 255, 255))  # (0, 180, 190), (40, 235, 255)
+            yellow_only = cv2.inRange(hsv, (0, 180, 190), (40, 235, 255))  # (0, 180, 190), (40, 235, 255)
 
             self.point_cloud_processing(image, img.header, yellow_only, self.red_mask_publisher,
                                         self.red_mask_point_cloud_publisher)
