@@ -295,7 +295,7 @@ class Navigation:
             # send trajectories to mapping class for collision detection
             self.collision_traj_idx = self.map.check_collision(temp_pose_matrix, y_in_map_pix, x_in_map_pix)
 
-            if debug:
+            if True:
                 msg = "collision_traj_idx: " + str(self.collision_traj_idx)
                 rospy.loginfo_throttle(1, msg)
 

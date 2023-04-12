@@ -4,7 +4,7 @@ land_offset: -0.3
 launch_height: 1.5
 vicon_enabled: false
 rate: 20
-vis: true
+vis: false
 error_tol: 0.075
 unlimited_waypts: false
 rotate_angle: 0.523599 # 0.523599 30 degree  1.0472 60 degree  1.5708 90 degree

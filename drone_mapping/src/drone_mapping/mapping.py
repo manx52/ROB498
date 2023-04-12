@@ -164,63 +164,46 @@ class Mapping:
 
             # Going through all trajectories using kdtrees calculate distance from each point to obstacles
             for opt in range(traj_mat.shape[0]):
-                for timestep in range(traj_mat.shape[1]):
-
-                    # Get current location of the drone
-                    curr_loc = np.array(
-                        [int(traj_mat[opt, timestep, 0]), int(traj_mat[opt, timestep, 1])])
-
-                    # Use kdtree to find the closest obstacle to the current location of the drone
-                    if timestep == 2 and self.dir_enable and opt == 0:
-                        if len(close_green) > 0:
-                            kdtree_green = sp.cKDTree(close_green)
-                            green_d, green_i = kdtree_green.query(curr_loc.T, k=1)
-                        else:
-                            green_d = float('inf')
-
-                        if len(close_red) > 0:
-                            kdtree_red = sp.cKDTree(close_red)
-                            red_d, red_i = kdtree_red.query(curr_loc.T, k=1)
-                        else:
-                            red_d = float('inf')
-
-                        if green_d < red_d:
-                            closest = 'green'
-
-                        if debug:
-                            print("opt: ", opt, "D: ", green_d, red_d, len(close_green), len(close_red))
-
-                    if opt in [7, 8, 9, 10, 11, 12] and closest == 'green' and self.dir_enable:
-                        collision_traj_idx.append(opt)
-                        break
-
-                    elif opt in [1, 2, 3, 4, 5, 6] and closest == 'red' and self.dir_enable:
-                        collision_traj_idx.append(opt)
-                        break
-
-                    kdtree = sp.cKDTree(close_wall)
-                    d, i = kdtree.query(curr_loc.T, k=1)
-
-                    if debug:
-                        print("opt: ", opt, "D: ", d)
-
-                    # If distance to the closest obstacle is less than the drone's collision radius, add index of
-                    # trajectory to the collision_traj_idx list and break out of inner loop
-                    if d < self.drone_collision_radius_pix:
-                        collision_traj_idx.append(opt)
-                        break
-
-        if len(collision_traj_idx) == traj_mat.shape[0]:
-            collision_traj_idx = []
-            if len(close_wall) > 0:
-
-                # Going through all trajectories using kdtrees calculate distance from each point to obstacles
-                for opt in range(traj_mat.shape[0]):
-                    for timestep in range(traj_mat.shape[1]):
+                for timestep in range(traj_mat.shape[1]-1):
+                    x_diff = (traj_mat[opt, timestep + 1, 0] - traj_mat[opt, timestep, 0]) / 4
+                    y_diff = (traj_mat[opt, timestep + 1, 1] - traj_mat[opt, timestep, 1]) / 4
+                    for i in range(5):
+                        temp_pose_x = traj_mat[opt, timestep, 0] + x_diff * i
+                        temp_pose_y = traj_mat[opt, timestep, 1] + y_diff * i
 
                         # Get current location of the drone
                         curr_loc = np.array(
-                            [int(traj_mat[opt, timestep, 0]), int(traj_mat[opt, timestep, 1])])
+                            [int(temp_pose_x), int(temp_pose_y)])
+
+                        # Use kdtree to find the closest obstacle to the current location of the drone
+                        if timestep == 2 and self.dir_enable and opt == 0:
+                            if len(close_green) > 0:
+                                kdtree_green = sp.cKDTree(close_green)
+                                green_d, green_i = kdtree_green.query(curr_loc.T, k=1)
+                            else:
+                                green_d = float('inf')
+
+                            if len(close_red) > 0:
+                                kdtree_red = sp.cKDTree(close_red)
+                                red_d, red_i = kdtree_red.query(curr_loc.T, k=1)
+                            else:
+                                red_d = float('inf')
+
+                            if green_d < red_d:
+                                closest = 'green'
+                            else:
+                                closest = 'red'
+
+                            if debug:
+                                print("opt: ", opt, "D: ", green_d, red_d, len(close_green), len(close_red))
+
+                        if opt in [7, 8, 9, 10, 11, 12] and closest == 'green' and self.dir_enable:
+                            collision_traj_idx.append(opt)
+                            break
+
+                        elif opt in [1, 2, 3, 4, 5, 6] and closest == 'red' and self.dir_enable:
+                            collision_traj_idx.append(opt)
+                            break
 
                         kdtree = sp.cKDTree(close_wall)
                         d, i = kdtree.query(curr_loc.T, k=1)
@@ -233,6 +216,35 @@ class Mapping:
                         if d < self.drone_collision_radius_pix:
                             collision_traj_idx.append(opt)
                             break
+
+        if len(collision_traj_idx) == traj_mat.shape[0]:
+            collision_traj_idx = []
+            if len(close_wall) > 0:
+
+                # Going through all trajectories using kdtrees calculate distance from each point to obstacles
+                for opt in range(traj_mat.shape[0]):
+                    for timestep in range(traj_mat.shape[1] - 1):
+                        x_diff = (traj_mat[opt, timestep + 1, 0] - traj_mat[opt, timestep, 0]) / 4
+                        y_diff = (traj_mat[opt, timestep + 1, 1] - traj_mat[opt, timestep, 1]) / 4
+                        for i in range(5):
+                            temp_pose_x = traj_mat[opt, timestep, 0] + x_diff * i
+                            temp_pose_y = traj_mat[opt, timestep, 1] + y_diff * i
+
+                            # Get current location of the drone
+                            curr_loc = np.array(
+                                [int(temp_pose_x), int(temp_pose_y)])
+                            kdtree = sp.cKDTree(close_wall)
+
+                            d, i = kdtree.query(curr_loc.T, k=1)
+
+                            if debug:
+                                print("opt: ", opt, "D: ", d)
+
+                            # If distance to the closest obstacle is less than the drone's collision radius, add index of
+                            # trajectory to the collision_traj_idx list and break out of inner loop
+                            if d < self.drone_collision_radius_pix:
+                                collision_traj_idx.append(opt)
+                                break
 
         # Return the list of indices of trajectories that collide with obstacles
         return collision_traj_idx
@@ -280,17 +292,17 @@ class Mapping:
         :return:
         """
         # obs 1: 1,0 red
-        temp_pts = np.array([1, 0]).reshape((1, 2))
+        temp_pts = np.array([2.1, -2.1]).reshape((1, 2))
         self.update(temp_pts, 100)
 
         # obs 2: 2,1 green
-        temp_pts = np.array([2, 1]).reshape((1, 2))
+        temp_pts = np.array([2.1, 2.1]).reshape((1, 2))
         self.update(temp_pts, 50)
 
         # obs 3: 1,2 red
-        temp_pts = np.array([1, 2]).reshape((1, 2))
+        temp_pts = np.array([-2.1, -2.1]).reshape((1, 2))
         self.update(temp_pts, 100)
 
         # obs 4: 0,1 green
-        temp_pts = np.array([0, 1]).reshape((1, 2))
+        temp_pts = np.array([-2.1, 2.1]).reshape((1, 2))
         self.update(temp_pts, 50)
