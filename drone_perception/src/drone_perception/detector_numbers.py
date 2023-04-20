@@ -186,6 +186,6 @@ class DetectorNumbers(Detector):
 
 
 if __name__ == "__main__":
-    rospy.init_node("detector_fieldline")
+    rospy.init_node("detector_number")
     number_detector = DetectorNumbers()
     rospy.spin()

@@ -6,7 +6,11 @@
      <!-- Launch Realsense Camera -->
  
 
-     <node pkg="drone_perception" type="main.py" name="detector_obstacles" output="screen">
+<!--     <node pkg="drone_perception" type="main.py" name="detector_obstacles" output="screen">-->
+<!--        <rosparam file="$(find drone_perception)/config/config_real.yaml" command="load" />-->
+<!--     </node>-->
+
+     <node pkg="drone_perception" type="detector_numbers.py" name="detector_number" output="screen">
         <rosparam file="$(find drone_perception)/config/config_real.yaml" command="load" />
      </node>
      <arg name="rvizconfig" default="$(find drone_perception)/rviz/t265.rviz" />
