@@ -37,3 +37,5 @@ torchvision==0.14.0+cu117; platform_machine == 'x86_64'
 
 scikit-image~=0.16.2
 pyrealsense2~=2.53.1.4623; platform_machine == 'x86_64'
+argparse~=1.4.0
+imutils~=0.5.4
