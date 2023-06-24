@@ -2,9 +2,9 @@ name: Deploy to github pages
 
 on:
   push:
-    branches: ["team_7"]
+    branches: ["main"]
   pull_request:
-    branches: ["team_7"]
+    branches: ["main"]
   workflow_dispatch:
 
 permissions:
@@ -83,7 +83,7 @@ jobs:
         uses: mxschmitt/action-tmate@v3
   # Deployment job
   deploy:
-    if: github.ref == 'refs/heads/team_7'
+    if: github.ref == 'refs/heads/main'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
